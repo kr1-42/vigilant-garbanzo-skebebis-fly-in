@@ -27,7 +27,7 @@ COLOR_MAP = {
 
 DEFAULT_COLOR = (200, 200, 200)  # Light gray default
 HUB_RADIUS = 15
-PADDING = 2
+PADDING = 0
 
 
 def parse_color(color_name: str | None) -> tuple[int, int, int]:
@@ -91,9 +91,10 @@ def visualize(data: Data) -> None:
     aspect_ratio = bounds_width / bounds_height if bounds_height != 0 else 1
 
     # Set window size (with padding)
-    window_height = 800
+    window_height = 600
     window_width = int(window_height * aspect_ratio)
     window_width = max(window_width, 600)
+    window_width = min(window_width, 1000)  # Cap max width
 
     screen = pygame.display.set_mode((window_width, window_height))
     pygame.display.set_caption("Drone Network Visualization")
@@ -110,6 +111,26 @@ def visualize(data: Data) -> None:
 
         # Clear screen
         screen.fill((255, 255, 255))
+
+        # Draw connections (lines between hubs)
+        for connection in data.connections:
+            hub_a = data.hubs[connection.hub_a]
+            hub_b = data.hubs[connection.hub_b]
+
+            # Scale positions to screen coordinates
+            screen_x_a, screen_y_a = scale_to_screen(
+                hub_a.x, hub_a.y,
+                min_x, max_x, min_y, max_y,
+                window_width, window_height
+            )
+            screen_x_b, screen_y_b = scale_to_screen(
+                hub_b.x, hub_b.y,
+                min_x, max_x, min_y, max_y,
+                window_width, window_height
+            )
+
+            # Draw line between hubs
+            pygame.draw.line(screen, (128, 128, 128), (screen_x_a, screen_y_a), (screen_x_b, screen_y_b), 2)
 
         # Draw hubs
         for hub in data.hubs.values():
