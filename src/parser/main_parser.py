@@ -1,19 +1,15 @@
-# **************************************************************************** #
-#                                                                              #
-#                                                         :::      ::::::::    #
-#    main_parser.py                                     :+:      :+:    :+:    #
-#                                                     +:+ +:+         +:+      #
-#    By: chrilomb <marvin@42.fr>                    +#+  +:+       +#+         #
-#                                                 +#+#+#+#+#+   +#+            #
-#    Created: 2026/03/29 16:55:31 by chrilomb          #+#    #+#              #
-#    Updated: 2026/03/29 17:11:25 by chrilomb         ###   ########.fr        #
-#                                                                              #
-# **************************************************************************** #
-
 from sys import argv
-from dependency_check import check_dependencies
+from .dependency_check import check_dependencies
+from ..cls_data import Data
+from .file_parse import parse_file, parse_text
 
-def main():
+
+def main_parser() -> Data:
+    """ Main parser function to read configuration from a file and return a Data object.
+    @returns: A Data object containing the parsed configuration for the drone network.
+    @raises ValueError: If the input file is malformed or contains invalid data.
+    @raises ImportError: If required dependencies are missing.
+    @raises FileNotFoundError: If the specified input file does not exist. """
     if len(argv) != 2:
         raise ValueError("Usage: python fly_on.py <filename> or make")
     if check_dependencies() == False:
@@ -21,7 +17,8 @@ def main():
     filename: str = argv[1]
     try:
         with open(filename, 'r') as file:
+            data: Data = parse_text(parse_file(file))
     except FileNotFoundError:
-        print(f"Error: File '{filename}' not found.")
-    data: list[str] = parse_file(file)
-    
+        raise FileNotFoundError(f"Error: File '{filename}' not found.")
+    return data
+
