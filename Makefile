@@ -1,9 +1,9 @@
 NAME = fly-in.py
 FILE = .base.txt
 
-all: $(NAME)
+all: run
 
-$(NAME):
+run: $(NAME)
 	@python3 $(NAME) $(FILE)
 
 lint:

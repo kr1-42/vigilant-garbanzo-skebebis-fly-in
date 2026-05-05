@@ -7,3 +7,5 @@ __pycache__/
 *.log
 *.tmp
 *.bak
+src/__pycache__/
+src/*/__pycache__/
