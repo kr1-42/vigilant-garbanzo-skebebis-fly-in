@@ -14,7 +14,7 @@ from .ui.renderer import draw_connections, draw_hubs, draw_drones, draw_simulati
 WINDOW_WIDTH = 1000
 WINDOW_HEIGHT = 800
 
-DRONE_GIF = "sprites/FO1_Fire_critical_hit.gif"
+DRONE_GIF = "sprites/Mutant1.gif"
 HUB_GIF = "sprites/Maroboaa_se.gif"
 
 DRONE_GIF_SIZE = (60, 60)
