@@ -53,7 +53,7 @@ def visualize(data: Data) -> None:
         # Initialize simulation state
         turn_elapsed = 0
         base_turn_duration_ms = max(gif_duration, 100) if gif_frames else 100
-        speed_multiplier = 10
+        speed_multiplier = 0.5
 
         def get_turn_duration() -> int:
             """Calculate turn duration based on current speed multiplier."""

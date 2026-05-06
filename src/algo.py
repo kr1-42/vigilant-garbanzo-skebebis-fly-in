@@ -212,7 +212,9 @@ def check_path_feasibility(path: list[str], data: Data) -> dict:
     connection_capacities = {}
 
     # Check each hub in path
+    print(path)
     for hub_name in path:
+
         if hub_name not in data.hubs:
             violations.append(f"Hub '{hub_name}' not found")
             continue
@@ -335,7 +337,7 @@ def optimize_path_strategy(data: Data) -> tuple[list[list[str]] | list[str], str
 
     # Compare strategies
     use_multiple = False
-    best_paths = [single_path] if single_path else []
+    best_paths = single_path if single_path else []
 
     if multiple_paths and single_path:
         # Both strategies exist - compare total turns
