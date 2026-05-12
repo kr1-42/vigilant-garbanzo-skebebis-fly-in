@@ -21,6 +21,7 @@ class Hub:
     @param max_drones: Maximum number of drones that can be at the hub simultaneously (default is 1)
     @param color: Optional color for the hub
     """
+
     kind: str
     name: str
     x: float
@@ -31,9 +32,13 @@ class Hub:
 
     def __post_init__(self) -> None:
         if self.zone not in VALID_ZONE_TYPES:
-            raise ValueError(f"invalid zone type '{self.zone}'. Must be one of: {VALID_ZONE_TYPES}")
+            raise ValueError(
+                f"invalid zone type '{self.zone}'. Must be one of: {VALID_ZONE_TYPES}"
+            )
         if self.max_drones <= 0:
-            raise ValueError(f"max_drones must be positive, got {self.max_drones}")
+            raise ValueError(
+                f"max_drones must be positive, got {self.max_drones}"
+            )
 
 
 @dataclass(frozen=True)
@@ -44,13 +49,16 @@ class Connection:
     @param hub_b: Name of the second hub
     @param max_link_capacity: Maximum drones that can traverse this connection simultaneously (default is 1)
     """
+
     hub_a: str
     hub_b: str
     max_link_capacity: int = 1
 
     def __post_init__(self) -> None:
         if self.max_link_capacity <= 0:
-            raise ValueError(f"max_link_capacity must be positive, got {self.max_link_capacity}")
+            raise ValueError(
+                f"max_link_capacity must be positive, got {self.max_link_capacity}"
+            )
 
     def contains(self, hub_a: str, hub_b: str) -> bool:
         """Check if this connection links the two hubs (bidirectional)."""
@@ -61,12 +69,13 @@ class Connection:
 
 @dataclass(frozen=True)
 class Data:
-    """ Represents the entire configuration of the drone delivery network.
+    """Represents the entire configuration of the drone delivery network.
     @param nb_drones: Total number of drones available
     @param hubs: Dictionary mapping hub names to Hub objects
     @param connections: List of Connection objects representing the links between hubs
     @param start_hub: Name of the starting hub
     @param end_hub: Name of the ending hub"""
+
     nb_drones: int
     hubs: dict[str, Hub]
     connections: list[Connection]
@@ -74,7 +83,7 @@ class Data:
     end_hub: str
 
     def __post_init__(self) -> None:
-        """ Validate the integrity of the data after initialization. Checks include:
+        """Validate the integrity of the data after initialization. Checks include:
         - nb_drones must be a positive integer
         - start_hub and end_hub must be defined in hubs
         - start_hub must be declared as a start_hub and end_hub as an end_hub
@@ -88,7 +97,9 @@ class Data:
         if self.end_hub not in self.hubs:
             raise ValueError(f"end_hub '{self.end_hub}' not defined")
         if self.hubs[self.start_hub].kind != "start_hub":
-            raise ValueError(f"'{self.start_hub}' must be declared as start_hub")
+            raise ValueError(
+                f"'{self.start_hub}' must be declared as start_hub"
+            )
         if self.hubs[self.end_hub].kind != "end_hub":
             raise ValueError(f"'{self.end_hub}' must be declared as end_hub")
         seen: set[tuple[str, str]] = set()

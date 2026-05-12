@@ -5,7 +5,9 @@ from ..cls_data import Hub
 PADDING = 50  # Increased to keep hubs and labels inside window
 
 
-def get_canvas_bounds(hubs: dict[str, Hub]) -> tuple[float, float, float, float]:
+def get_canvas_bounds(
+    hubs: dict[str, Hub],
+) -> tuple[float, float, float, float]:
     """Get min/max x and y coordinates from hubs."""
     if not hubs:
         return 0, 0, 100, 100
@@ -22,9 +24,14 @@ def get_canvas_bounds(hubs: dict[str, Hub]) -> tuple[float, float, float, float]
 
 
 def scale_to_screen(
-    x: float, y: float,
-    min_x: float, max_x: float, min_y: float, max_y: float,
-    screen_width: int, screen_height: int
+    x: float,
+    y: float,
+    min_x: float,
+    max_x: float,
+    min_y: float,
+    max_y: float,
+    screen_width: int,
+    screen_height: int,
 ) -> tuple[int, int]:
     """Convert world coordinates to screen coordinates."""
     # Normalize to 0-1 range

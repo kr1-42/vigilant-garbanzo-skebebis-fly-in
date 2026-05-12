@@ -1,4 +1,5 @@
 import heapq
+import random
 from dataclasses import dataclass
 from .cls_data import Data
 
@@ -8,7 +9,7 @@ ZONE_COSTS = {
     "normal": 1,
     "priority": 1,
     "restricted": 2,
-    "blocked": float('inf'),  # Blocked zones are inaccessible
+    "blocked": float("inf"),  # Blocked zones are inaccessible
 }
 
 
@@ -86,7 +87,7 @@ def dijkstra_find_path(data: Data) -> tuple[list[str], int] | None:
     # Priority queue: (cost, hub_name, path)
     pq = [(0, start, [start])]
     visited = set()
-    distances = {hub: float('inf') for hub in data.hubs}
+    distances = {hub: float("inf") for hub in data.hubs}
     distances[start] = 0
 
     while pq:
@@ -115,7 +116,9 @@ def dijkstra_find_path(data: Data) -> tuple[list[str], int] | None:
     return None
 
 
-def find_multiple_paths(data: Data, max_paths: int = 3) -> list[tuple[list[str], int]]:
+def find_multiple_paths(
+    data: Data, max_paths: int = 3
+) -> list[tuple[list[str], int]]:
     """
     Find multiple independent paths from start to end hub.
     Each path respects capacity constraints and zone accessibility.
@@ -139,8 +142,11 @@ def find_multiple_paths(data: Data, max_paths: int = 3) -> list[tuple[list[str],
             edge = tuple(sorted([hub_a, hub_b]))
 
             # Only add edges that are accessible and not fully excluded
-            if edge not in excluded_edges and \
-               is_hub_accessible(hub_a, data) and is_hub_accessible(hub_b, data):
+            if (
+                edge not in excluded_edges
+                and is_hub_accessible(hub_a, data)
+                and is_hub_accessible(hub_b, data)
+            ):
                 graph[hub_a].append(hub_b)
                 graph[hub_b].append(hub_a)
 
@@ -148,13 +154,15 @@ def find_multiple_paths(data: Data, max_paths: int = 3) -> list[tuple[list[str],
         end = data.end_hub
 
         # Check if start and end are still accessible
-        if not is_hub_accessible(start, data) or not is_hub_accessible(end, data):
+        if not is_hub_accessible(start, data) or not is_hub_accessible(
+            end, data
+        ):
             break
 
         # Dijkstra's algorithm to find one path
         pq = [(0, start, [start])]
         visited = set()
-        distances = {hub: float('inf') for hub in data.hubs}
+        distances = {hub: float("inf") for hub in data.hubs}
         distances[start] = 0
 
         path_found = None
@@ -177,7 +185,9 @@ def find_multiple_paths(data: Data, max_paths: int = 3) -> list[tuple[list[str],
 
                     if new_cost < distances[neighbor]:
                         distances[neighbor] = new_cost
-                        heapq.heappush(pq, (new_cost, neighbor, path + [neighbor]))
+                        heapq.heappush(
+                            pq, (new_cost, neighbor, path + [neighbor])
+                        )
 
         if path_found:
             paths.append(path_found)
@@ -214,7 +224,6 @@ def check_path_feasibility(path: list[str], data: Data) -> dict:
     # Check each hub in path
     print(path)
     for hub_name in path:
-
         if hub_name not in data.hubs:
             violations.append(f"Hub '{hub_name}' not found")
             continue
@@ -243,7 +252,9 @@ def check_path_feasibility(path: list[str], data: Data) -> dict:
     }
 
 
-def _estimate_single_path_turns(path: list[str], nb_drones: int, data: Data) -> int:
+def _estimate_single_path_turns(
+    path: list[str], nb_drones: int, data: Data
+) -> int:
     """
     Estimate total turns needed for all drones on a single path.
     Accounts for movement costs and basic capacity constraints.
@@ -278,7 +289,9 @@ def _estimate_single_path_turns(path: list[str], nb_drones: int, data: Data) -> 
         return total_path_cost + (nb_drones - 1) * 1
 
 
-def _estimate_multiple_paths_turns(paths: list[tuple[list[str], int]], nb_drones: int) -> int:
+def _estimate_multiple_paths_turns(
+    paths: list[tuple[list[str], int]], nb_drones: int
+) -> int:
     """
     Estimate total turns needed for multiple disjoint paths.
     Assumes drones are distributed across paths and move in parallel.
@@ -311,7 +324,9 @@ def _estimate_multiple_paths_turns(paths: list[tuple[list[str], int]], nb_drones
     return max_turns
 
 
-def optimize_path_strategy(data: Data) -> tuple[list[list[str]] | list[str], str]:
+def optimize_path_strategy(
+    data: Data,
+) -> tuple[list[list[str]] | list[str], str]:
     """
     Optimize the pathfinding strategy by comparing single vs. multiple paths.
     Chooses the approach that minimizes total turns for all drones.
@@ -327,7 +342,7 @@ def optimize_path_strategy(data: Data) -> tuple[list[list[str]] | list[str], str
     # Try to find a single optimal path
     single_path_result = dijkstra_find_path(data)
     single_path = None
-    single_path_cost = float('inf')
+    single_path_cost = float("inf")
 
     if single_path_result:
         single_path, single_path_cost = single_path_result
@@ -341,22 +356,32 @@ def optimize_path_strategy(data: Data) -> tuple[list[list[str]] | list[str], str
 
     if multiple_paths and single_path:
         # Both strategies exist - compare total turns
-        single_turns = _estimate_single_path_turns(single_path, data.nb_drones, data)
-        multiple_turns = _estimate_multiple_paths_turns(multiple_paths, data.nb_drones)
+        single_turns = _estimate_single_path_turns(
+            single_path, data.nb_drones, data
+        )
+        multiple_turns = _estimate_multiple_paths_turns(
+            multiple_paths, data.nb_drones
+        )
 
         print(f"\nPath optimization:")
-        print(f"  Single path: {' -> '.join(single_path)} (estimated {single_turns} total turns)")
+        print(
+            f"  Single path: {' -> '.join(single_path)} (estimated {single_turns} total turns)"
+        )
         for i, (p, cost) in enumerate(multiple_paths):
-            print(f"  Multiple path {i+1}: {' -> '.join(p)} (cost: {cost})")
+            print(f"  Multiple path {i + 1}: {' -> '.join(p)} (cost: {cost})")
         print(f"  Single strategy total: {single_turns} turns")
         print(f"  Multiple strategy total: {multiple_turns} turns")
 
         if multiple_turns < single_turns:
-            print(f"  → Using multiple paths (saves {single_turns - multiple_turns} turns)")
+            print(
+                f"  → Using multiple paths (saves {single_turns - multiple_turns} turns)"
+            )
             use_multiple = True
             best_paths = [p[0] for p in multiple_paths]
         else:
-            print(f"  → Using single path (saves {multiple_turns - single_turns} turns)")
+            print(
+                f"  → Using single path (saves {multiple_turns - single_turns} turns)"
+            )
             use_multiple = False
     elif multiple_paths and not single_path:
         # Only multiple paths exist
@@ -371,6 +396,7 @@ def optimize_path_strategy(data: Data) -> tuple[list[list[str]] | list[str], str
 @dataclass
 class Drone:
     """Represents a single drone in the network."""
+
     drone_id: int
     current_hub: str  # Current location (hub name)
     path_index: int  # Index in the path where the drone is
@@ -397,18 +423,29 @@ class DroneScheduler:
         self.drones: list[Drone] = []
         self.current_turn = 0
 
-        # Create all drones at the start hub
+        # Create all drones at the start hub with individual staggering
+        # Each drone gets a unique stagger value (0-15) to prevent synchronized waves
+        # This spreads drones out smoothly without creating visible batches
         for i in range(data.nb_drones):
-            self.drones.append(Drone(
-                drone_id=i,
-                current_hub=data.start_hub,
-                path_index=0,
-                turns_at_hub=1,
-            ))
+            stagger = min(
+                i, 15
+            )  # Spread across 16 unique stagger values (0-15)
+            self.drones.append(
+                Drone(
+                    drone_id=i,
+                    current_hub=data.start_hub,
+                    path_index=0,
+                    turns_at_hub=stagger,
+                )
+            )
 
     def get_hub_occupancy(self, hub_name: str) -> int:
         """Count how many active drones are currently at a hub."""
-        return sum(1 for d in self.drones if d.current_hub == hub_name and not d.completed)
+        return sum(
+            1
+            for d in self.drones
+            if d.current_hub == hub_name and not d.completed
+        )
 
     def get_connection_usage(self, hub_a: str, hub_b: str) -> int:
         """Count how many drones are currently traversing a connection."""
@@ -416,8 +453,13 @@ class DroneScheduler:
         count = 0
         for d in self.drones:
             if not d.completed and d.path_index < len(self.path) - 1:
-                if (self.path[d.path_index] == hub_a and self.path[d.path_index + 1] == hub_b) or \
-                   (self.path[d.path_index] == hub_b and self.path[d.path_index + 1] == hub_a):
+                if (
+                    self.path[d.path_index] == hub_a
+                    and self.path[d.path_index + 1] == hub_b
+                ) or (
+                    self.path[d.path_index] == hub_b
+                    and self.path[d.path_index + 1] == hub_a
+                ):
                     count += 1
         return count
 
@@ -442,10 +484,10 @@ class DroneScheduler:
         return True
 
     def advance_turn(self) -> None:
-        """Advance simulation by one turn. Move eligible drones with capacity constraints.
+        """Advance simulation by one turn. Move drones individually in priority order.
 
-        Key: All drones that can move DO move simultaneously, but we check for capacity
-        violations and apply a priority system (drone ID) to resolve conflicts.
+        Key: Moves drones one at a time in drone ID order (FIFO with priority),
+        respecting capacity constraints. Prevents synchronized group movement.
         """
         self.current_turn += 1
 
@@ -469,19 +511,22 @@ class DroneScheduler:
             if drone.turns_at_hub >= movement_cost:
                 candidates.append(drone)
 
-        # Sort candidates by drone ID for deterministic priority when resolving conflicts
+        # Sort candidates by drone ID for FIFO priority
         candidates.sort(key=lambda d: d.drone_id)
 
         # Track hub occupancy AFTER moves to check capacity
         hub_after_moves = {}
         for hub_name in self.data.hubs:
-            # Current occupancy (excluding candidates that will leave)
+            # Count all non-moving, active drones
             hub_after_moves[hub_name] = sum(
-                1 for d in self.drones
-                if d.current_hub == hub_name and not d.completed and d not in candidates
+                1
+                for d in self.drones
+                if d.current_hub == hub_name
+                and not d.completed
+                and d not in candidates
             )
 
-        # Attempt to move each candidate in priority order
+        # Move drones one at a time in priority order (by drone ID)
         drones_to_move = []
         for drone in candidates:
             next_hub = self.path[drone.path_index + 1]
@@ -496,7 +541,9 @@ class DroneScheduler:
         for drone in drones_to_move:
             drone.path_index += 1
             drone.current_hub = self.path[drone.path_index]
-            drone.turns_at_hub = 0
+            # Use drone_id-based stagger with prime modulo to prevent group synchronization
+            # This breaks cycles so drones don't cluster in groups of N
+            drone.turns_at_hub = (drone.drone_id * 3) % 13
 
             # Check if drone reached the end
             if drone.path_index >= len(self.path) - 1:
@@ -555,7 +602,9 @@ class MultiPathDroneScheduler:
         self.paths = paths
         self.num_drones = data.nb_drones
         self.drones: list[Drone] = []
-        self.drone_path_assignment: dict[int, int] = {}  # drone_id -> path_index
+        self.drone_path_assignment: dict[
+            int, int
+        ] = {}  # drone_id -> path_index
         self.current_turn = 0
 
         # Distribute drones across paths based on capacity
@@ -568,16 +617,21 @@ class MultiPathDroneScheduler:
         for path_idx, path in enumerate(self.paths):
             # Calculate how many drones can use this path
             # Limited by the smallest hub capacity along the path
-            min_hub_capacity = min(self.data.hubs[hub].max_drones for hub in path)
+            min_hub_capacity = min(
+                self.data.hubs[hub].max_drones for hub in path
+            )
             drones_for_path = min(min_hub_capacity, self.num_drones - drone_idx)
 
-            # Create drones for this path
+            # Create drones for this path with individual staggering
             for i in range(drones_for_path):
+                stagger = min(
+                    drone_idx, 15
+                )  # Spread across 16 unique stagger values to prevent synchronized waves
                 drone = Drone(
                     drone_id=drone_idx,
                     current_hub=self.data.start_hub,
                     path_index=0,
-                    turns_at_hub=1,
+                    turns_at_hub=stagger,
                 )
                 self.drones.append(drone)
                 self.drone_path_assignment[drone_idx] = path_idx
@@ -590,11 +644,14 @@ class MultiPathDroneScheduler:
         if drone_idx < self.num_drones:
             best_path_idx = 0  # Use first path as fallback
             while drone_idx < self.num_drones:
+                stagger = min(
+                    drone_idx, 15
+                )  # Spread across 16 unique stagger values to prevent synchronized waves
                 drone = Drone(
                     drone_id=drone_idx,
                     current_hub=self.data.start_hub,
                     path_index=0,
-                    turns_at_hub=1,
+                    turns_at_hub=stagger,
                 )
                 self.drones.append(drone)
                 self.drone_path_assignment[drone_idx] = best_path_idx
@@ -625,10 +682,11 @@ class MultiPathDroneScheduler:
         # Check hub capacity at next hub (count drones going to this hub on same path)
         path_idx = self.drone_path_assignment[drone.drone_id]
         next_hub_occupancy = sum(
-            1 for d in self.drones
-            if not d.completed and
-            self.drone_path_assignment[d.drone_id] == path_idx and
-            path[d.path_index] == next_hub
+            1
+            for d in self.drones
+            if not d.completed
+            and self.drone_path_assignment[d.drone_id] == path_idx
+            and path[d.path_index] == next_hub
         )
 
         next_hub_obj = self.data.hubs[next_hub]
@@ -638,13 +696,13 @@ class MultiPathDroneScheduler:
         return True
 
     def advance_turn(self) -> None:
-        """Advance simulation by one turn. Move eligible drones with capacity constraints.
+        """Advance simulation by one turn. Move drones individually in priority order.
 
         Handles:
         - Multiple disjoint paths
         - Hub capacity constraints (max_drones)
         - Connection capacity constraints (max_link_capacity)
-        - Priority-based conflict resolution (drone ID)
+        - FIFO movement by drone ID (prevents synchronized waves)
         """
         self.current_turn += 1
 
@@ -669,15 +727,19 @@ class MultiPathDroneScheduler:
             if drone.turns_at_hub >= movement_cost:
                 candidates.append(drone)
 
-        # Sort candidates by drone ID for deterministic priority
+        # Sort candidates by drone ID for FIFO priority
         candidates.sort(key=lambda d: d.drone_id)
 
         # Track hub occupancy AFTER moves (excluding candidates leaving)
         hub_after_moves = {}
         for hub_name in self.data.hubs:
+            # Count all non-moving, active drones
             hub_after_moves[hub_name] = sum(
-                1 for d in self.drones
-                if d.current_hub == hub_name and not d.completed and d not in candidates
+                1
+                for d in self.drones
+                if d.current_hub == hub_name
+                and not d.completed
+                and d not in candidates
             )
 
         # Track connection usage AFTER moves
@@ -687,9 +749,11 @@ class MultiPathDroneScheduler:
 
         connection_usage_after = {}
         for conn in self.data.connections:
-            connection_usage_after[get_connection_key(conn.hub_a, conn.hub_b)] = 0
+            connection_usage_after[
+                get_connection_key(conn.hub_a, conn.hub_b)
+            ] = 0
 
-        # Attempt to move each candidate in priority order
+        # Move drones one at a time in priority order (by drone ID)
         drones_to_move = []
         for drone in candidates:
             path = self.get_drone_path(drone)
@@ -699,14 +763,18 @@ class MultiPathDroneScheduler:
 
             # Check hub capacity
             if hub_after_moves[next_hub] >= next_hub_obj.max_drones:
-                continue  # Can't move, hub is full
+                continue  # Hub is full, can't move
 
             # Check connection capacity
             conn_key = get_connection_key(current_hub, next_hub)
             if conn_key in connection_usage_after:
                 conn = find_connection(current_hub, next_hub, self.data)
-                if conn and connection_usage_after[conn_key] >= conn.max_link_capacity:
-                    continue  # Can't move, connection is full
+                if (
+                    conn
+                    and connection_usage_after[conn_key]
+                    >= conn.max_link_capacity
+                ):
+                    continue  # Connection is full, can't move
 
             # This drone can move!
             drones_to_move.append(drone)
@@ -719,7 +787,9 @@ class MultiPathDroneScheduler:
             path = self.get_drone_path(drone)
             drone.path_index += 1
             drone.current_hub = path[drone.path_index]
-            drone.turns_at_hub = 0
+            # Use drone_id-based stagger with prime modulo to prevent group synchronization
+            # This breaks cycles so drones don't cluster in groups of N
+            drone.turns_at_hub = (drone.drone_id * 3) % 13
 
             # Check if drone reached the end
             if drone.path_index >= len(path) - 1:
@@ -731,7 +801,11 @@ class MultiPathDroneScheduler:
 
     def get_hub_occupancy(self, hub_name: str) -> int:
         """Count how many active drones are at a hub."""
-        return sum(1 for d in self.drones if d.current_hub == hub_name and not d.completed)
+        return sum(
+            1
+            for d in self.drones
+            if d.current_hub == hub_name and not d.completed
+        )
 
     def get_completion_times(self) -> dict[int, int]:
         """Get the turn at which each drone completed."""

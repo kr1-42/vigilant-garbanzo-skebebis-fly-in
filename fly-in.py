@@ -15,10 +15,28 @@ def fly_in() -> int:
         3 - Runtime error during visualization
         4 - Dependency error
     """
-    data: Data = main_parser()
-    visualize(data)
-    return 0
+    try:
+        data: Data = main_parser()
+    except FileNotFoundError as e:
+        print(f"Error: {e}", file=sys.stderr)
+        return 2
+    except ImportError as e:
+        print(f"Error: {e}", file=sys.stderr)
+        return 4
+    except ValueError as e:
+        print(f"Configuration Error: {e}", file=sys.stderr)
+        return 1
 
+    try:
+        visualize(data)
+    except KeyboardInterrupt:
+        print("\nProgram interrupted by user")
+        return 0
+    except Exception as e:
+        print(f"Runtime Error: {e}", file=sys.stderr)
+        return 3
+
+    return 0
 
 
 if __name__ == "__main__":

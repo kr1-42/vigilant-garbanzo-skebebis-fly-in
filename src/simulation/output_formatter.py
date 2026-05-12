@@ -35,7 +35,10 @@ class SimulationOutputFormatter:
         # Sort by drone ID for consistent output
         movements_sorted = sorted(movements, key=lambda x: x[0])
 
-        formatted_movements = [f"D{drone_id}-{destination}" for drone_id, destination in movements_sorted]
+        formatted_movements = [
+            f"D{drone_id}-{destination}"
+            for drone_id, destination in movements_sorted
+        ]
         return " ".join(formatted_movements)
 
     def print_turn_output(self, turn: int) -> None:
@@ -96,7 +99,7 @@ class SimulationOutputFormatter:
             return
 
         try:
-            with open(filename, 'w') as f:
+            with open(filename, "w") as f:
                 f.write(output)
             print(f"Simulation output saved to {filename}")
         except IOError as e:

@@ -8,7 +8,7 @@ from ..parser.file_parse import parse_file, parse_text
 def load_map_from_file(file_path: str) -> Data | None:
     """Load a map file and return a Data object."""
     try:
-        with open(file_path, 'r') as file:
+        with open(file_path, "r") as file:
             data = parse_text(parse_file(file))
         return data
     except Exception as e:

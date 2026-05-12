@@ -3,18 +3,33 @@
 import pygame
 from typing import cast
 from .cls_data import Data
-from .algo import check_path_feasibility, dijkstra_find_path, find_multiple_paths, MultiPathDroneScheduler, optimize_path_strategy
-from .simulation.integration import SimulationWithTracking, SimulationWithMultiPath
+from .algo import (
+    check_path_feasibility,
+    dijkstra_find_path,
+    find_multiple_paths,
+    MultiPathDroneScheduler,
+    optimize_path_strategy,
+)
+from .simulation.integration import (
+    SimulationWithTracking,
+    SimulationWithMultiPath,
+)
 from .utils.assets import load_gif_frames
 from .utils.geometry import get_canvas_bounds
-from .loaders.map_loader import load_map_from_file
-from .ui.menu import display_map_menu
-from .ui.renderer import draw_connections, draw_hubs, draw_drones, draw_simulation_info
+from .loaders.map_loader import load_map_from_file, get_available_maps
+from .ui.renderer import (
+    draw_connections,
+    draw_hubs,
+    draw_drones,
+    draw_simulation_info,
+    draw_end_screen_with_menu,
+)
+from .ui.zone_info import ZoneInfoPopup, HoverDetector
 
 WINDOW_WIDTH = 1000
 WINDOW_HEIGHT = 800
 
-DRONE_GIF = "sprites/Mutant1.gif"
+DRONE_GIF = "sprites/FO1_Fire_critical_hit.gif"
 HUB_GIF = "sprites/Maroboaa_se.gif"
 
 DRONE_GIF_SIZE = (60, 60)
@@ -42,18 +57,28 @@ def visualize(data: Data) -> None:
         clock = pygame.time.Clock()
 
         # Load sprites
-        gif_result = load_gif_frames(DRONE_GIF, max_width=DRONE_GIF_SIZE[0], max_height=DRONE_GIF_SIZE[1])
+        gif_result = load_gif_frames(
+            DRONE_GIF, max_width=DRONE_GIF_SIZE[0], max_height=DRONE_GIF_SIZE[1]
+        )
         gif_frames = gif_result[0] if gif_result else None
         gif_duration = gif_result[1] if gif_result else DEFAULT_GIF_DURATION
 
-        hub_gif_result = load_gif_frames(HUB_GIF, max_width=HUB_GIF_SIZE[0], max_height=HUB_GIF_SIZE[1])
+        hub_gif_result = load_gif_frames(
+            HUB_GIF, max_width=HUB_GIF_SIZE[0], max_height=HUB_GIF_SIZE[1]
+        )
         hub_gif_frames = hub_gif_result[0] if hub_gif_result else None
-        hub_gif_duration = hub_gif_result[1] if hub_gif_result else DEFAULT_GIF_DURATION
+        hub_gif_duration = (
+            hub_gif_result[1] if hub_gif_result else DEFAULT_GIF_DURATION
+        )
 
         # Initialize simulation state
         turn_elapsed = 0
         base_turn_duration_ms = max(gif_duration, 100) if gif_frames else 100
-        speed_multiplier = 0.5
+        speed_multiplier = 10.0
+
+        # Initialize hover popup system
+        zone_info_popup = ZoneInfoPopup(data)
+        hover_detector = HoverDetector(hub_radius=HUB_GIF_SIZE[0] // 2)
 
         def get_turn_duration() -> int:
             """Calculate turn duration based on current speed multiplier."""
@@ -108,7 +133,16 @@ def visualize(data: Data) -> None:
 
         # Main loop
         running = True
-        show_menu = False
+        simulation_complete = False
+        selected_menu_index = 0
+        available_maps = get_available_maps()
+
+        # Flatten maps for selection
+        menu_items = []
+        for category in sorted(available_maps.keys()):
+            menu_items.append(("header", category))
+            for map_name, map_path in available_maps[category]:
+                menu_items.append(("map", (map_name, map_path)))
 
         while running:
             dt = clock.tick(6000)  # 60 FPS
@@ -120,55 +154,135 @@ def visualize(data: Data) -> None:
                     running = False
                 elif event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_ESCAPE:
-                        running = False
+                        if simulation_complete:
+                            running = False
+                        else:
+                            running = False
                     # Speed control: UP arrow to speed up, DOWN arrow to slow down
-                    elif event.key == pygame.K_UP:
-                        speed_multiplier = min(speed_multiplier + 0.5, 20)  # Max 7.5x speed
-                    elif event.key == pygame.K_DOWN:
-                        speed_multiplier = max(speed_multiplier - 0.5, 0.25)  # Min 0.25x speed
+                    elif event.key == pygame.K_UP and not simulation_complete:
+                        speed_multiplier = min(speed_multiplier + 0.5, 20)
+                    elif event.key == pygame.K_DOWN and not simulation_complete:
+                        speed_multiplier = max(speed_multiplier - 0.5, 0.25)
+                    # Menu navigation (when simulation is complete)
+                    elif event.key == pygame.K_UP and simulation_complete:
+                        selected_menu_index = (selected_menu_index - 1) % len(
+                            menu_items
+                        )
+                        while menu_items[selected_menu_index][0] == "header":
+                            selected_menu_index = (
+                                selected_menu_index - 1
+                            ) % len(menu_items)
+                    elif event.key == pygame.K_DOWN and simulation_complete:
+                        selected_menu_index = (selected_menu_index + 1) % len(
+                            menu_items
+                        )
+                        while menu_items[selected_menu_index][0] == "header":
+                            selected_menu_index = (
+                                selected_menu_index + 1
+                            ) % len(menu_items)
+                    elif event.key == pygame.K_RETURN and simulation_complete:
+                        if menu_items[selected_menu_index][0] == "map":
+                            selected_map = menu_items[selected_menu_index][1][1]
+                            new_data = load_map_from_file(selected_map)
+                            if new_data:
+                                pygame.quit()
+                                visualize(new_data)
+                                return
+                            else:
+                                print("Failed to load selected map")
 
             # Check if all drones have completed
-            if tracking and tracking.all_drones_completed() and not show_menu:
+            if (
+                tracking
+                and tracking.all_drones_completed()
+                and not simulation_complete
+            ):
                 print("\n=== SIMULATION COMPLETE ===")
                 print(f"Total turns: {tracking.current_turn}")
                 print()
-                show_menu = True
+                simulation_complete = True
 
-            # Show menu if all drones completed
-            if show_menu:
-                selected_map = display_map_menu(screen, WINDOW_WIDTH, WINDOW_HEIGHT)
-                if selected_map:
-                    # Load new map and recursively visualize it
-                    new_data = load_map_from_file(selected_map)
-                    if new_data:
-                        pygame.quit()
-                        visualize(new_data)
-                        return
-                    else:
-                        print("Failed to load selected map")
-                        show_menu = False
-                else:
-                    # User cancelled menu
-                    running = False
             # Advance simulation only when turn duration has elapsed
-            elif tracking and not tracking.all_drones_completed():
+            if tracking and not tracking.all_drones_completed():
                 if turn_elapsed >= get_turn_duration():
                     tracking.advance_turn()
                     turn_elapsed = 0
 
-            # Only draw simulation if menu is not being shown
-            if not show_menu:
+            # Draw simulation or end screen
+            if simulation_complete:
+                # Draw integrated end screen with metrics and map selection
+                draw_end_screen_with_menu(
+                    screen,
+                    tracking.scheduler,
+                    available_maps,
+                    selected_menu_index,
+                )
+            else:
+                # Draw normal simulation
                 # Clear screen
                 screen.fill((255, 255, 255))
 
                 # Draw all elements
-                draw_connections(screen, data, path, min_x, max_x, min_y, max_y, WINDOW_WIDTH, WINDOW_HEIGHT)
-                draw_hubs(screen, data, hub_gif_frames, hub_gif_duration, turn_elapsed,
-                          min_x, max_x, min_y, max_y, WINDOW_WIDTH, WINDOW_HEIGHT, tracking.scheduler if tracking else None)
-                draw_drones(screen, data, tracking.scheduler if tracking else None, path, gif_frames, turn_elapsed, get_turn_duration(),
-                            min_x, max_x, min_y, max_y, WINDOW_WIDTH, WINDOW_HEIGHT)
-                draw_simulation_info(screen, tracking.scheduler if tracking else None, speed_multiplier, show_menu)
-                pygame.display.flip()
+                draw_connections(
+                    screen,
+                    data,
+                    path,
+                    min_x,
+                    max_x,
+                    min_y,
+                    max_y,
+                    WINDOW_WIDTH,
+                    WINDOW_HEIGHT,
+                )
+                draw_hubs(
+                    screen,
+                    data,
+                    hub_gif_frames,
+                    hub_gif_duration,
+                    turn_elapsed,
+                    min_x,
+                    max_x,
+                    min_y,
+                    max_y,
+                    WINDOW_WIDTH,
+                    WINDOW_HEIGHT,
+                    tracking.scheduler if tracking else None,
+                    hover_detector,
+                )
+                draw_drones(
+                    screen,
+                    data,
+                    tracking.scheduler if tracking else None,
+                    path,
+                    gif_frames,
+                    turn_elapsed,
+                    get_turn_duration(),
+                    min_x,
+                    max_x,
+                    min_y,
+                    max_y,
+                    WINDOW_WIDTH,
+                    WINDOW_HEIGHT,
+                )
+                draw_simulation_info(
+                    screen,
+                    tracking.scheduler if tracking else None,
+                    speed_multiplier,
+                    simulation_complete,
+                )
+
+                # Draw hover popup if mouse is over a hub
+                mouse_pos = pygame.mouse.get_pos()
+                hovered_hub = hover_detector.get_hovered_hub(mouse_pos, data)
+                if hovered_hub:
+                    zone_info_popup.draw_popup(
+                        screen,
+                        mouse_pos,
+                        hovered_hub,
+                        tracking.scheduler if tracking else None,
+                    )
+
+            pygame.display.flip()
 
     finally:
         pygame.quit()

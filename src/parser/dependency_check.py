@@ -10,12 +10,14 @@
 #                                                                              #
 # **************************************************************************** #
 
+
 def check_dependencies():
     try:
         import numpy
         import matplotlib
         import pandas
         import pygame
+
         return True
     except ImportError as e:
         print(f"Dependency error: {e}")

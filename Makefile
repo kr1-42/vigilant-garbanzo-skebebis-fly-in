@@ -1,21 +1,31 @@
 NAME = fly-in.py
 FILE = .base.txt
+PYTHON := ./venv/bin/python3
+
+MAP_DIR = maps/files
+MAPS = $(wildcard $(MAP_DIR)/*.txt)
+
+SHELL := /bin/bash
 
 all: run
 
 run: $(NAME)
-	@python3 $(NAME) $(FILE)
+	@$(PYTHON) $(NAME) $(FILE)
 
-run-all: $(NAME)
-	@python3 $(NAME) maps/easy/01_linear_path.txt
-	@python3 $(NAME) maps/easy/02_simple_fork.txt
-	@python3 $(NAME) maps/hard/01_maze_nightmare.txt
-	@python3 $(NAME) maps/hard/02_capacity_hell.txt
-	@python3 $(NAME) maps/easy/03_basic_capacity.txt
-	@python3 $(NAME) maps/hard/03_ultimate_challenge.txt
-	@python3 $(NAME) maps/medium/01_dead_end_trap.txt
-	@python3 $(NAME) maps/medium/02_circular_loop.txt
-	@python3 $(NAME) maps/medium/03_priority_puzzle.txt
+test: $(NAME)
+	source ./venv/bin/activate
+	@for file in $(MAPS); do \
+		echo "==================================="; \
+		echo "Running with $$file"; \
+		echo "==================================="; \
+		$(PYTHON) $(NAME) $$file; \
+		echo ""; \
+	done
+
+
+install:
+	python3 -m venv venv
+	./venv/bin/pip install -r requirements.txt
 
 lint:
 	flake8 .

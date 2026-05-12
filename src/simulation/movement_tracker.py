@@ -16,12 +16,18 @@ class DroneMovementTracker:
         """
         self.path = path
         self.num_drones = num_drones
-        self.movement_history: Dict[int, List[tuple[int, str]]] = {}  # turn -> [(drone_id, destination)]
+        self.movement_history: Dict[
+            int, List[tuple[int, str]]
+        ] = {}  # turn -> [(drone_id, destination)]
         self.current_turn = 0
-        self.drone_positions: Dict[int, int] = {i: 0 for i in range(num_drones)}  # drone_id -> path_index
+        self.drone_positions: Dict[int, int] = {
+            i: 0 for i in range(num_drones)
+        }  # drone_id -> path_index
         self.drone_completed: set[int] = set()  # drone_ids that have completed
 
-    def record_movement(self, drone_id: int, old_path_index: int, new_path_index: int) -> None:
+    def record_movement(
+        self, drone_id: int, old_path_index: int, new_path_index: int
+    ) -> None:
         """
         Record that a drone moved from one position to another.
 

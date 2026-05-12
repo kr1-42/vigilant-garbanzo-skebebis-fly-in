@@ -9,7 +9,9 @@ from .output_formatter import SimulationOutputFormatter
 class SimulationWithTracking:
     """Wraps DroneScheduler and tracks all drone movements for output."""
 
-    def __init__(self, data: Data, path: list[str], enable_live_output: bool = True):
+    def __init__(
+        self, data: Data, path: list[str], enable_live_output: bool = True
+    ):
         """
         Initialize the simulation with tracking.
 
@@ -34,7 +36,9 @@ class SimulationWithTracking:
         Advance the simulation by one turn and track movements.
         """
         # Record positions before movement
-        positions_before = {drone.drone_id: drone.path_index for drone in self.scheduler.drones}
+        positions_before = {
+            drone.drone_id: drone.path_index for drone in self.scheduler.drones
+        }
 
         # Advance scheduler
         self.scheduler.advance_turn()
@@ -85,7 +89,13 @@ class SimulationWithTracking:
 class SimulationWithMultiPath:
     """Wraps MultiPathDroneScheduler and tracks all drone movements for output."""
 
-    def __init__(self, data: Data, paths: list[list[str]], scheduler: MultiPathDroneScheduler, enable_live_output: bool = True):
+    def __init__(
+        self,
+        data: Data,
+        paths: list[list[str]],
+        scheduler: MultiPathDroneScheduler,
+        enable_live_output: bool = True,
+    ):
         """
         Initialize multi-path simulation with tracking.
 
@@ -112,7 +122,9 @@ class SimulationWithMultiPath:
         Advance the simulation by one turn and track movements.
         """
         # Record positions before movement
-        positions_before = {drone.drone_id: drone.path_index for drone in self.scheduler.drones}
+        positions_before = {
+            drone.drone_id: drone.path_index for drone in self.scheduler.drones
+        }
 
         # Advance scheduler
         self.scheduler.advance_turn()

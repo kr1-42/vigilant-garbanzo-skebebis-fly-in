@@ -1,17 +1,6 @@
-# **************************************************************************** #
-#                                                                              #
-#                                                         :::      ::::::::    #
-#    file_parse.py                                      :+:      :+:    :+:    #
-#                                                     +:+ +:+         +:+      #
-#    By: chrilomb <chrilomb@student.42.fr>          +#+  +:+       +#+         #
-#                                                 +#+#+#+#+#+   +#+            #
-#    Created: 2026/03/29 17:03:49 by chrilomb          #+#    #+#              #
-#    Updated: 2026/05/05 14:55:55 by chrilomb         ###   ########.fr        #
-#                                                                              #
-# **************************************************************************** #
-
 from ..cls_data import Hub, Connection, Data, VALID_ZONE_TYPES
 from typing import TextIO
+
 
 def _parse_metadata(metadata_str: str) -> dict[str, str]:
     """Parse metadata from a bracketed string like "[zone=normal color=red max_drones=2]"
@@ -25,12 +14,16 @@ def _parse_metadata(metadata_str: str) -> dict[str, str]:
         return result
     for part in metadata_str.split():
         if "=" not in part:
-            raise ValueError(f"invalid metadata format: '{part}' (expected key=value)")
+            raise ValueError(
+                f"invalid metadata format: '{part}' (expected key=value)"
+            )
         key, value = part.split("=", 1)
         key = key.strip()
         value = value.strip()
         if not key or not value:
-            raise ValueError(f"invalid metadata: empty key or value in '{part}'")
+            raise ValueError(
+                f"invalid metadata: empty key or value in '{part}'"
+            )
         result[key] = value
     return result
 
@@ -66,16 +59,22 @@ def parse_text(text: list[str]) -> Data:
                 try:
                     nb_drones = int(value_str)
                 except ValueError:
-                    raise ValueError(f"nb_drones must be an integer, got '{value_str}'")
+                    raise ValueError(
+                        f"nb_drones must be an integer, got '{value_str}'"
+                    )
                 if nb_drones <= 0:
-                    raise ValueError(f"nb_drones must be positive, got {nb_drones}")
+                    raise ValueError(
+                        f"nb_drones must be positive, got {nb_drones}"
+                    )
                 continue
 
             if line.startswith(("start_hub:", "hub:", "end_hub:")):
                 kind, rest = line.split(":", 1)
                 parts = rest.strip().split(maxsplit=3)
                 if len(parts) < 3:
-                    raise ValueError(f"expected at least 3 parts (name x y), got {len(parts)}")
+                    raise ValueError(
+                        f"expected at least 3 parts (name x y), got {len(parts)}"
+                    )
 
                 name, x_str, y_str = parts[0], parts[1], parts[2]
                 metadata_str = parts[3] if len(parts) > 3 else ""
@@ -92,10 +91,14 @@ def parse_text(text: list[str]) -> Data:
                     x = float(x_str)
                     y = float(y_str)
                 except ValueError:
-                    raise ValueError(f"invalid coordinates: x='{x_str}', y='{y_str}' (expected floats)")
+                    raise ValueError(
+                        f"invalid coordinates: x='{x_str}', y='{y_str}' (expected floats)"
+                    )
 
                 if not (-1e6 <= x <= 1e6 and -1e6 <= y <= 1e6):
-                    raise ValueError(f"coordinates out of reasonable bounds: x={x}, y={y}")
+                    raise ValueError(
+                        f"coordinates out of reasonable bounds: x={x}, y={y}"
+                    )
 
                 # Parse and validate metadata
                 metadata = _parse_metadata(metadata_str)
@@ -103,21 +106,35 @@ def parse_text(text: list[str]) -> Data:
                 # Validate and get zone
                 zone = metadata.get("zone", "normal")
                 if zone not in VALID_ZONE_TYPES:
-                    raise ValueError(f"invalid zone type '{zone}'. Must be one of: {VALID_ZONE_TYPES}")
+                    raise ValueError(
+                        f"invalid zone type '{zone}'. Must be one of: {VALID_ZONE_TYPES}"
+                    )
 
                 # Validate and get max_drones
                 try:
                     max_drones = int(metadata.get("max_drones", "1"))
                 except ValueError:
-                    raise ValueError(f"invalid max_drones value: '{metadata['max_drones']}' (expected positive integer)")
+                    raise ValueError(
+                        f"invalid max_drones value: '{metadata['max_drones']}' (expected positive integer)"
+                    )
                 if max_drones <= 0:
-                    raise ValueError(f"max_drones must be positive, got {max_drones}")
+                    raise ValueError(
+                        f"max_drones must be positive, got {max_drones}"
+                    )
 
                 # Get optional color
                 color = metadata.get("color", None)
 
                 # Create hub
-                hub = Hub(kind=kind, name=name, x=x, y=y, zone=zone, max_drones=max_drones, color=color)
+                hub = Hub(
+                    kind=kind,
+                    name=name,
+                    x=x,
+                    y=y,
+                    zone=zone,
+                    max_drones=max_drones,
+                    color=color,
+                )
                 hubs.append(hub)
                 continue
 
@@ -138,27 +155,43 @@ def parse_text(text: list[str]) -> Data:
 
                 # Parse connection
                 if "-" not in conn_str:
-                    raise ValueError(f"invalid connection format: '{conn_str}' (expected: hub_a-hub_b)")
+                    raise ValueError(
+                        f"invalid connection format: '{conn_str}' (expected: hub_a-hub_b)"
+                    )
 
                 parts = conn_str.split("-", 1)
                 hub_a, hub_b = parts[0].strip(), parts[1].strip()
 
                 if not hub_a or not hub_b:
-                    raise ValueError(f"invalid connection: empty hub names in '{conn_str}'")
+                    raise ValueError(
+                        f"invalid connection: empty hub names in '{conn_str}'"
+                    )
                 if hub_a == hub_b:
-                    raise ValueError(f"self-loop connection not allowed: '{hub_a}-{hub_b}'")
+                    raise ValueError(
+                        f"self-loop connection not allowed: '{hub_a}-{hub_b}'"
+                    )
 
                 # Parse and validate metadata
                 metadata = _parse_metadata(metadata_str)
 
                 try:
-                    max_link_capacity = int(metadata.get("max_link_capacity", "1"))
+                    max_link_capacity = int(
+                        metadata.get("max_link_capacity", "1")
+                    )
                 except ValueError:
-                    raise ValueError(f"invalid max_link_capacity: '{metadata['max_link_capacity']}' (expected positive integer)")
+                    raise ValueError(
+                        f"invalid max_link_capacity: '{metadata['max_link_capacity']}' (expected positive integer)"
+                    )
                 if max_link_capacity <= 0:
-                    raise ValueError(f"max_link_capacity must be positive, got {max_link_capacity}")
+                    raise ValueError(
+                        f"max_link_capacity must be positive, got {max_link_capacity}"
+                    )
 
-                conn = Connection(hub_a=hub_a, hub_b=hub_b, max_link_capacity=max_link_capacity)
+                conn = Connection(
+                    hub_a=hub_a,
+                    hub_b=hub_b,
+                    max_link_capacity=max_link_capacity,
+                )
                 connections.append(conn)
                 continue
 
@@ -170,17 +203,23 @@ def parse_text(text: list[str]) -> Data:
 
     # Final validation of required fields
     if nb_drones is None:
-        raise ValueError("Configuration missing required field: nb_drones")
+        raise ValueError("missing nb_drones")
 
     # Validate all referenced hubs exist before creating Data
     for conn in connections:
         if conn.hub_a not in hub_names_seen:
-            raise ValueError(f"Connection references undefined hub: '{conn.hub_a}'")
+            raise ValueError(
+                f"connection references undefined hub: '{conn.hub_a}'"
+            )
         if conn.hub_b not in hub_names_seen:
-            raise ValueError(f"Connection references undefined hub: '{conn.hub_b}'")
+            raise ValueError(
+                f"connection references undefined hub: '{conn.hub_b}'"
+            )
 
-    # Create and return Data object (this performs additional validation)
-    return Data.from_parts(nb_drones=nb_drones, hubs=hubs, connections=connections)
+    # Create and return Data object (validates start/end hub)
+    return Data.from_parts(
+        nb_drones=nb_drones, hubs=hubs, connections=connections
+    )
 
 
 def parse_file(file: TextIO) -> list[str]:
@@ -189,7 +228,7 @@ def parse_file(file: TextIO) -> list[str]:
     Preserves line order and handles various whitespace formats.
 
     @param file: A file-like object to read from
-    @returns: A list of strings, each representing a meaningful configuration line
+    @returns: A list of configuration line strings
     @raises ValueError: If there's an error reading the file
     """
     data: list[str] = []
@@ -198,7 +237,7 @@ def parse_file(file: TextIO) -> list[str]:
             # Strip leading/trailing whitespace
             line = line.strip()
             # Skip empty lines and comments
-            if line and not line.startswith('#'):
+            if line and not line.startswith("#"):
                 data.append(line)
     except IOError as e:
         raise ValueError(f"Error reading configuration file: {e}")

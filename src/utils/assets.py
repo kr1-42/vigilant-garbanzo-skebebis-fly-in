@@ -4,7 +4,9 @@ import pygame
 from PIL import Image
 
 
-def load_gif_frames(gif_path: str, max_width: int = 20, max_height: int = 20) -> tuple[list, int] | None:
+def load_gif_frames(
+    gif_path: str, max_width: int = 20, max_height: int = 20
+) -> tuple[list, int] | None:
     """Load all frames from a GIF file and calculate total duration.
 
     Args:
@@ -29,18 +31,16 @@ def load_gif_frames(gif_path: str, max_width: int = 20, max_height: int = 20) ->
                 break
 
             # Get frame duration in milliseconds
-            duration = gif.info.get('duration', 100)
+            duration = gif.info.get("duration", 100)
             total_duration += duration
 
             # Convert frame to RGBA and resize
-            frame = gif.convert('RGBA')
+            frame = gif.convert("RGBA")
             frame.thumbnail((max_width, max_height), Image.Resampling.LANCZOS)
 
             # Convert PIL image to pygame surface
             pygame_surface = pygame.image.fromstring(
-                frame.tobytes(),
-                frame.size,
-                'RGBA'
+                frame.tobytes(), frame.size, "RGBA"
             )
             frames.append(pygame_surface)
             frame_index += 1
