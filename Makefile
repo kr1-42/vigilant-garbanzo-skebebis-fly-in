@@ -24,8 +24,13 @@ test: $(NAME)
 
 
 install:
-	python3 -m venv venv
-	./venv/bin/pip install -r requirements.txt
+	@if [ ! -f "venv/bin/python3" ]; then \
+		echo "Creating virtual environment..."; \
+		python3 -m venv venv; \
+	else \
+		echo "venv already exists"; \
+	fi
+	@./venv/bin/pip install -r requirements.txt
 
 lint:
 	flake8 .
