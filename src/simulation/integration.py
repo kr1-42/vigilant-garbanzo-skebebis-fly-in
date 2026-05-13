@@ -18,7 +18,7 @@ class SimulationWithTracking:
         Args:
             data: The drone network data
             path: The optimal path for drones
-            enable_live_output: Whether to print output to terminal in real-time
+            enable_live_output: Whether to print output to terminal
         """
         self.data = data
         self.path = path
@@ -87,7 +87,7 @@ class SimulationWithTracking:
 
 
 class SimulationWithMultiPath:
-    """Wraps MultiPathDroneScheduler and tracks all drone movements for output."""
+    """Wraps MultiPathDroneScheduler and tracks all drone movements for out"""
 
     def __init__(
         self,
@@ -103,7 +103,7 @@ class SimulationWithMultiPath:
             data: The drone network data
             paths: List of paths for drones
             scheduler: MultiPathDroneScheduler instance
-            enable_live_output: Whether to print output to terminal in real-time
+            enable_live_output: Whether to print output to terminal  real-time
         """
         self.data = data
         self.paths = paths
@@ -137,9 +137,6 @@ class SimulationWithMultiPath:
             # If drone moved to a new position, record it
             if new_pos > old_pos:
                 # Get the path this drone is on
-                path_idx = self.scheduler.drone_path_assignment[drone.drone_id]
-                path = self.paths[path_idx]
-                destination = path[new_pos]
                 self.tracker.record_movement(drone.drone_id, old_pos, new_pos)
 
         # Print output for this turn if enabled

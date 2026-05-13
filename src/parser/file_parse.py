@@ -3,7 +3,8 @@ from typing import TextIO
 
 
 def _parse_metadata(metadata_str: str) -> dict[str, str]:
-    """Parse metadata from a bracketed string like "[zone=normal color=red max_drones=2]"
+    """Parse metadata from a bracketed string like
+    "[zone=normal color=red max_drones=2]"
     Returns a dict of key-value pairs. Raises ValueError on invalid format."""
     result: dict[str, str] = {}
     metadata_str = metadata_str.strip()
@@ -73,7 +74,7 @@ def parse_text(text: list[str]) -> Data:
                 parts = rest.strip().split(maxsplit=3)
                 if len(parts) < 3:
                     raise ValueError(
-                        f"expected at least 3 parts (name x y), got {len(parts)}"
+                        f"expected at 3 parts (name x y), got {len(parts)}"
                     )
 
                 name, x_str, y_str = parts[0], parts[1], parts[2]
@@ -92,7 +93,8 @@ def parse_text(text: list[str]) -> Data:
                     y = float(y_str)
                 except ValueError:
                     raise ValueError(
-                        f"invalid coordinates: x='{x_str}', y='{y_str}' (expected floats)"
+                        f"invalid coordinates: x='{x_str}', y='{y_str}'",
+                        " (expected floats)"
                     )
 
                 if not (-1e6 <= x <= 1e6 and -1e6 <= y <= 1e6):
@@ -107,7 +109,8 @@ def parse_text(text: list[str]) -> Data:
                 zone = metadata.get("zone", "normal")
                 if zone not in VALID_ZONE_TYPES:
                     raise ValueError(
-                        f"invalid zone type '{zone}'. Must be one of: {VALID_ZONE_TYPES}"
+                        f"invalid zone type '{zone}'.",
+                        f" Must be one of: {VALID_ZONE_TYPES}"
                     )
 
                 # Validate and get max_drones
@@ -115,7 +118,8 @@ def parse_text(text: list[str]) -> Data:
                     max_drones = int(metadata.get("max_drones", "1"))
                 except ValueError:
                     raise ValueError(
-                        f"invalid max_drones value: '{metadata['max_drones']}' (expected positive integer)"
+                        f"invalid max_drones value: {metadata['max_drones']}",
+                        " (expected positive integer)"
                     )
                 if max_drones <= 0:
                     raise ValueError(
@@ -156,7 +160,8 @@ def parse_text(text: list[str]) -> Data:
                 # Parse connection
                 if "-" not in conn_str:
                     raise ValueError(
-                        f"invalid connection format: '{conn_str}' (expected: hub_a-hub_b)"
+                        f"invalid connection format: '{conn_str}'",
+                        " (expected: hub_a-hub_b)"
                     )
 
                 parts = conn_str.split("-", 1)
@@ -180,11 +185,14 @@ def parse_text(text: list[str]) -> Data:
                     )
                 except ValueError:
                     raise ValueError(
-                        f"invalid max_link_capacity: '{metadata['max_link_capacity']}' (expected positive integer)"
+                        "invalid max_link_capacity: ",
+                        f"'{metadata['max_link_capacity']}'",
+                        " (expected positive integer)"
                     )
                 if max_link_capacity <= 0:
                     raise ValueError(
-                        f"max_link_capacity must be positive, got {max_link_capacity}"
+                        "max_link_capacity must be positive,",
+                        f" got {max_link_capacity}"
                     )
 
                 conn = Connection(

@@ -5,8 +5,6 @@ from typing import cast
 from .cls_data import Data
 from .algo import (
     check_path_feasibility,
-    dijkstra_find_path,
-    find_multiple_paths,
     MultiPathDroneScheduler,
     optimize_path_strategy,
 )
@@ -58,7 +56,9 @@ def visualize(data: Data) -> None:
 
         # Load sprites
         gif_result = load_gif_frames(
-            DRONE_GIF, max_width=DRONE_GIF_SIZE[0], max_height=DRONE_GIF_SIZE[1]
+            DRONE_GIF,
+            max_width=DRONE_GIF_SIZE[0],
+            max_height=DRONE_GIF_SIZE[1],
         )
         gif_frames = gif_result[0] if gif_result else None
         gif_duration = gif_result[1] if gif_result else DEFAULT_GIF_DURATION
@@ -158,10 +158,11 @@ def visualize(data: Data) -> None:
                             running = False
                         else:
                             running = False
-                    # Speed control: UP arrow to speed up, DOWN arrow to slow down
                     elif event.key == pygame.K_UP and not simulation_complete:
                         speed_multiplier = min(speed_multiplier + 0.5, 20)
-                    elif event.key == pygame.K_DOWN and not simulation_complete:
+                    elif (
+                        event.key == pygame.K_DOWN and not simulation_complete
+                    ):
                         speed_multiplier = max(speed_multiplier - 0.5, 0.25)
                     # Menu navigation (when simulation is complete)
                     elif event.key == pygame.K_UP and simulation_complete:
@@ -182,7 +183,9 @@ def visualize(data: Data) -> None:
                             ) % len(menu_items)
                     elif event.key == pygame.K_RETURN and simulation_complete:
                         if menu_items[selected_menu_index][0] == "map":
-                            selected_map = menu_items[selected_menu_index][1][1]
+                            selected_map = menu_items[selected_menu_index][1][
+                                1
+                            ]
                             new_data = load_map_from_file(selected_map)
                             if new_data:
                                 pygame.quit()

@@ -19,7 +19,7 @@ def load_map_from_file(file_path: str) -> Data | None:
 def get_available_maps() -> dict[str, list[tuple[str, str]]]:
     """Get available maps organized by category.
 
-    Returns a dict where keys are category names (easy, medium, hard, challenger)
+    Returns a dict where keys are category names
     and values are lists of (map_name, file_path) tuples.
     """
     maps_folder = Path("maps")

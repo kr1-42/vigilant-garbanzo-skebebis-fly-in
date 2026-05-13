@@ -1,11 +1,12 @@
 """Map selection menu UI."""
 
 import pygame
-from ..loaders.map_loader import get_available_maps
+from pygame.surface import Surface
+from loaders.map_loader import get_available_maps
 
 
 def display_map_menu(
-    screen, window_width: int, window_height: int
+    screen: pygame.Surface, window_width: int, window_height: int
 ) -> str | None:
     """Display a map selection menu and return the selected map file path.
 
@@ -24,7 +25,7 @@ def display_map_menu(
     font_small = pygame.font.Font(None, 24)
 
     # Flatten maps into a single list with category headers
-    menu_items = []  # List of (type, data) tuples where type is 'header' or 'map'
+    menu_items: list[tuple[str, str | tuple[str, str]]] = []
 
     for category in sorted(available_maps.keys()):
         menu_items.append(("header", category))
@@ -65,9 +66,9 @@ def display_map_menu(
                         selected_index = (selected_index + 1) % len(menu_items)
                 elif event.key == pygame.K_RETURN:
                     if menu_items[selected_index][0] == "map":
-                        return menu_items[selected_index][1][
+                        return str(menu_items[selected_index][1][
                             1
-                        ]  # Return file path
+                        ])  # Return file path
 
         # Draw menu
         screen.fill((40, 40, 40))
@@ -79,12 +80,13 @@ def display_map_menu(
         for i, (item_type, item_data) in enumerate(menu_items):
             if item_type == "header":
                 # Draw category header
-                text = font_normal.render(item_data, True, (255, 200, 0))
+                text: Surface = font_normal.render(item_data,
+                                                   True, (255, 200, 0))
                 screen.blit(text, (50, y_offset))
                 y_offset += 50
             else:
                 # Draw map option
-                map_name, _ = item_data
+                map_name, _ = tuple(item_data)
                 if i == selected_index:
                     # Highlight selected item
                     pygame.draw.rect(

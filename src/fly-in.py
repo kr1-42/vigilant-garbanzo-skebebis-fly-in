@@ -1,7 +1,7 @@
 import sys
-from src.parser.main_parser import main_parser
-from src.cls_data import Data
-from src.visualizer import visualize
+from .parser.main_parser import main_parser
+from .cls_data import Data
+from .visualizer import visualize
 
 
 def fly_in() -> int:

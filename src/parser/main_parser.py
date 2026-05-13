@@ -19,9 +19,10 @@ def main_parser() -> Data:
     if len(argv) != 2:
         raise ValueError("Usage: python fly_in.py <filename> or make")
 
-    if check_dependencies() == False:
+    if check_dependencies() is False:
         raise ImportError(
-            "Missing dependencies. Please install them before running the program."
+            "Missing dependencies. Please install them ",
+            "before running the program."
         )
 
     filename: str = argv[1]

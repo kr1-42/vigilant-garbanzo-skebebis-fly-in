@@ -40,7 +40,9 @@ class DroneMovementTracker:
             self.movement_history[self.current_turn] = []
 
         destination = self.path[new_path_index]
-        self.movement_history[self.current_turn].append((drone_id, destination))
+        self.movement_history[self.current_turn].append(
+            (drone_id, destination)
+        )
         self.drone_positions[drone_id] = new_path_index
 
         # Check if drone reached the end

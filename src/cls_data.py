@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Iterable
+from typing import Iterable, cast
 
 # Valid zone types as per specification
 VALID_ZONE_TYPES = {"normal", "blocked", "restricted", "priority"}
@@ -18,7 +18,8 @@ class Hub:
     @param x: X-coordinate of the hub
     @param y: Y-coordinate of the hub
     @param zone: zone type (normal, blocked, restricted, priority)
-    @param max_drones: Maximum number of drones that can be at the hub simultaneously (default is 1)
+    @param max_drones: Maximum number of drones that can be at the hub
+    simultaneously (default is 1)
     @param color: Optional color for the hub
     """
 
@@ -33,7 +34,8 @@ class Hub:
     def __post_init__(self) -> None:
         if self.zone not in VALID_ZONE_TYPES:
             raise ValueError(
-                f"invalid zone type '{self.zone}'. Must be one of: {VALID_ZONE_TYPES}"
+                f"invalid zone type '{self.zone}'.",
+                f" Must be one of: {VALID_ZONE_TYPES}"
             )
         if self.max_drones <= 0:
             raise ValueError(
@@ -47,7 +49,8 @@ class Connection:
     Represents a bidirectional connection between two hubs.
     @param hub_a: Name of the first hub
     @param hub_b: Name of the second hub
-    @param max_link_capacity: Maximum drones that can traverse this connection simultaneously (default is 1)
+    @param max_link_capacity: Maximum drones that can traverse
+    this connection simultaneously (default is 1)
     """
 
     hub_a: str
@@ -57,7 +60,8 @@ class Connection:
     def __post_init__(self) -> None:
         if self.max_link_capacity <= 0:
             raise ValueError(
-                f"max_link_capacity must be positive, got {self.max_link_capacity}"
+                "max_link_capacity must be",
+                f" positive, got {self.max_link_capacity}"
             )
 
     def contains(self, hub_a: str, hub_b: str) -> bool:
@@ -72,7 +76,8 @@ class Data:
     """Represents the entire configuration of the drone delivery network.
     @param nb_drones: Total number of drones available
     @param hubs: Dictionary mapping hub names to Hub objects
-    @param connections: List of Connection objects representing the links between hubs
+    @param connections: List of Connection objects
+        representing the links between hubs
     @param start_hub: Name of the starting hub
     @param end_hub: Name of the ending hub"""
 
@@ -83,7 +88,8 @@ class Data:
     end_hub: str
 
     def __post_init__(self) -> None:
-        """Validate the integrity of the data after initialization. Checks include:
+        """Validate the integrity of the data after
+        initialization. Checks include:
         - nb_drones must be a positive integer
         - start_hub and end_hub must be defined in hubs
         - start_hub must be declared as a start_hub and end_hub as an end_hub
@@ -106,13 +112,18 @@ class Data:
         for conn in self.connections:
             hub_a, hub_b = conn.hub_a, conn.hub_b
             if hub_a not in self.hubs:
-                raise ValueError(f"connection references unknown hub '{hub_a}'")
+                raise ValueError(
+                    f"connection references unknown hub '{hub_a}'"
+                )
             if hub_b not in self.hubs:
-                raise ValueError(f"connection references unknown hub '{hub_b}'")
+                raise ValueError(
+                    f"connection references unknown hub '{hub_b}'"
+                )
             if hub_a == hub_b:
                 raise ValueError("self-loop connections are not allowed")
             # Check for duplicate connections (bidirectional)
-            normalized: tuple[str, str] = tuple(sorted([hub_a, hub_b]))  # type: ignore
+            normalized: tuple[str, str] = cast(tuple[str, str],
+                                               tuple(sorted([hub_a, hub_b])))
             if normalized in seen:
                 raise ValueError(f"duplicate connection: {hub_a}-{hub_b}")
             seen.add(normalized)
@@ -125,13 +136,17 @@ class Data:
         hubs: Iterable[Hub],
         connections: Iterable[Connection],
     ) -> Data:
-        """Factory that accepts variable-size inputs (any number of hubs/connections).
-        Validates the data and constructs the Data object. This is useful for parsing
-        from text input where the number of hubs and connections is not known in advance.
+        """Factory that accepts variable-size inputs (any
+        number of hubs/connections).
+        Validates the data and constructs the Data object.
+         This is useful for parsing
+        from text input where the number of hubs and conne
+        ctions is not known in advance.
         @var nb_drones: Total number of drones available
         @var hubs: Iterable of Hub objects
         @var connections: Iterable of Connection objects
-        @returns: A validated Data object containing the entire configuration"""
+        @returns: A validated Data object containing the entire configuration
+        """
         hubs_dict: dict[str, Hub] = {}
         start_name: str | None = None
         end_name: str | None = None

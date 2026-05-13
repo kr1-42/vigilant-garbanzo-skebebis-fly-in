@@ -82,7 +82,9 @@ def draw_hubs(
     scheduler=None,
     hover_detector=None,
 ) -> None:
-    """Draw hubs and their labels. Returns hover detector updated with hub positions."""
+    """Draw hubs and their labels. Returns hover detector updated with hub
+    positions.
+    """
     for hub in data.hubs.values():
         # Scale position to screen coordinates
         screen_x, screen_y = scale_to_screen(
@@ -226,7 +228,8 @@ def draw_drones(
 def draw_simulation_info(
     screen, scheduler, speed_multiplier: float = 1.0, is_complete: bool = False
 ) -> None:
-    """Draw simulation info text (turn number, drone completion status, and performance metrics)."""
+    """Draw simulation info text (turn number, drone completion status
+    , and performance metrics)."""
     if not scheduler:
         return
 
@@ -315,7 +318,9 @@ def draw_simulation_info(
 
         # Draw title
         y_offset = panel_y + 20
-        title_text = score_font.render("SIMULATION COMPLETE", True, (0, 150, 0))
+        title_text = score_font.render(
+            "SIMULATION COMPLETE", True, (0, 150, 0)
+        )
         title_rect = title_text.get_rect(
             center=(screen.get_width() // 2, y_offset)
         )
@@ -411,7 +416,9 @@ def draw_end_screen_with_menu(
 
     # Calculate final metrics
     completed_count = sum(1 for d in scheduler.drones if d.completed)
-    total_movements = sum(d.path_index for d in scheduler.drones if d.completed)
+    total_movements = sum(
+        d.path_index for d in scheduler.drones if d.completed
+    )
     avg_efficiency = (
         total_movements / scheduler.current_turn
         if scheduler.current_turn > 0
@@ -476,7 +483,8 @@ def draw_end_screen_with_menu(
         f"Avg Turns/Drone: {avg_turns:.2f}", True, (255, 150, 100)
     )
     screen.blit(
-        turns_text, (right_column - turns_text.get_width() // 2, metrics_y + 35)
+        turns_text,
+        (right_column - turns_text.get_width() // 2, metrics_y + 35),
     )
 
     y_offset += 90
@@ -492,7 +500,9 @@ def draw_end_screen_with_menu(
     y_offset += 20
 
     # ===== BOTTOM SECTION: MAP SELECTION MENU =====
-    menu_title = menu_header_font.render("Select Next Map", True, (255, 200, 0))
+    menu_title = menu_header_font.render(
+        "Select Next Map", True, (255, 200, 0)
+    )
     menu_title_rect = menu_title.get_rect(center=(screen_width // 2, y_offset))
     screen.blit(menu_title, menu_title_rect)
     y_offset += 45
@@ -518,7 +528,9 @@ def draw_end_screen_with_menu(
 
         if item_type == "header":
             # Category header
-            text = menu_item_font.render(item_data.upper(), True, (255, 200, 0))
+            text = menu_item_font.render(
+                item_data.upper(), True, (255, 200, 0)
+            )
             screen.blit(text, (50, y_offset))
             y_offset += item_height
         else:

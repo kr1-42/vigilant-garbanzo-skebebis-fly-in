@@ -1,0 +1,87 @@
+src/
+├── algo
+│   ├── constants.py
+│   ├── drone.py
+│   ├── __init__.py
+│   ├── multi_path_scheduler.py
+│   ├── optimization.py
+│   ├── pathfinding.py
+│   ├── __pycache__
+│   │   ├── constants.cpython-310.pyc
+│   │   ├── drone.cpython-310.pyc
+│   │   ├── __init__.cpython-310.pyc
+│   │   ├── multi_path_scheduler.cpython-310.pyc
+│   │   ├── optimization.cpython-310.pyc
+│   │   ├── pathfinding.cpython-310.pyc
+│   │   ├── scheduler.cpython-310.pyc
+│   │   └── turn_estimation.cpython-310.pyc
+│   ├── scheduler.py
+│   └── turn_estimation.py
+├── algo.py
+├── cls_data.py
+├── loaders
+│   ├── __init__.py
+│   ├── map_loader.py
+│   └── __pycache__
+│       ├── __init__.cpython-310.pyc
+│       └── map_loader.cpython-310.pyc
+├── parser
+│   ├── dependency_check.py
+│   ├── file_parse.py
+│   ├── main_parser.py
+│   └── __pycache__
+│       └── file_parse.cpython-310.pyc
+├── __pycache__
+│   └── cls_data.cpython-310.pyc
+├── simulation
+│   ├── __init__.py
+│   ├── integration.py
+│   ├── movement_tracker.py
+│   └── output_formatter.py
+├── ui
+│   ├── __init__.py
+│   ├── menu.py
+│   ├── renderer.py
+│   └── zone_info.py
+├── utils
+│   ├── assets.py
+│   ├── colors.py
+│   ├── geometry.py
+│   └── __init__.py
+└── visualizer.py
+
+10 directories, 40 files
+flake8 src/
+mypy src fly-in.py --strict
+src/algo/multi_path_scheduler.py:3: error: Cannot find implementation or library stub for module named ".cls_data"  [import-not-found]
+src/algo/multi_path_scheduler.py:3: note: See https://mypy.readthedocs.io/en/stable/running_mypy.html#missing-imports
+src/algo/optimization.py:3: error: Cannot find implementation or library stub for module named ".cls_data"  [import-not-found]
+src/algo/pathfinding.py:4: error: Cannot find implementation or library stub for module named ".cls_data"  [import-not-found]
+src/algo/scheduler.py:3: error: Cannot find implementation or library stub for module named ".cls_data"  [import-not-found]
+src/algo/turn_estimation.py:3: error: Cannot find implementation or library stub for module named ".cls_data"  [import-not-found]
+src/loaders/map_loader.py:4: error: Cannot find implementation or library stub for module named ".cls_data"  [import-not-found]
+src/loaders/map_loader.py:5: error: Cannot find implementation or library stub for module named ".parser.file_parse"  [import-not-found]
+src/parser/file_parse.py:1: error: Cannot find implementation or library stub for module named ".cls_data"  [import-not-found]
+src/parser/main_parser.py:2: error: Cannot find implementation or library stub for module named ".dependency_check"  [import-not-found]
+src/parser/main_parser.py:3: error: Cannot find implementation or library stub for module named ".cls_data"  [import-not-found]
+src/parser/main_parser.py:4: error: Cannot find implementation or library stub for module named ".file_parse"  [import-not-found]
+src/simulation/integration.py:3: error: Cannot find implementation or library stub for module named ".algo"  [import-not-found]
+src/simulation/integration.py:4: error: Cannot find implementation or library stub for module named ".cls_data"  [import-not-found]
+src/ui/menu.py:4: error: Cannot find implementation or library stub for module named ".loaders.map_loader"  [import-not-found]
+src/ui/renderer.py:5: error: Cannot find implementation or library stub for module named ".cls_data"  [import-not-found]
+src/ui/renderer.py:6: error: Cannot find implementation or library stub for module named ".utils.geometry"  [import-not-found]
+src/ui/renderer.py:7: error: Cannot find implementation or library stub for module named ".utils.colors"  [import-not-found]
+src/ui/zone_info.py:5: error: Cannot find implementation or library stub for module named ".cls_data"  [import-not-found]
+src/utils/geometry.py:3: error: Cannot find implementation or library stub for module named ".cls_data"  [import-not-found]
+src/visualizer.py:5: error: Cannot find implementation or library stub for module named ".cls_data"  [import-not-found]
+src/visualizer.py:6: error: Cannot find implementation or library stub for module named ".algo"  [import-not-found]
+src/visualizer.py:11: error: Cannot find implementation or library stub for module named ".simulation.integration"  [import-not-found]
+src/visualizer.py:15: error: Cannot find implementation or library stub for module named ".utils.assets"  [import-not-found]
+src/visualizer.py:16: error: Cannot find implementation or library stub for module named ".utils.geometry"  [import-not-found]
+src/visualizer.py:17: error: Cannot find implementation or library stub for module named ".loaders.map_loader"  [import-not-found]
+src/visualizer.py:18: error: Cannot find implementation or library stub for module named ".ui.renderer"  [import-not-found]
+src/visualizer.py:25: error: Cannot find implementation or library stub for module named ".ui.zone_info"  [import-not-found]
+src/parser/main_parser.py: error: Source file found twice under different module names: "main_parser" and "src.parser.main_parser"
+src/parser/main_parser.py: note: See https://mypy.readthedocs.io/en/stable/running_mypy.html#mapping-file-paths-to-modules for more info
+src/parser/main_parser.py: note: Common resolutions include: a) adding `__init__.py` somewhere, b) using `--explicit-package-bases` or adjusting MYPYPATH
+Found 28 errors in 14 files (errors prevented further checking)

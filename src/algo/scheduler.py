@@ -1,0 +1,250 @@
+"""Drone scheduler implementations for managing drone movement."""
+
+from ..cls_data import Data
+from .drone import Drone
+from .pathfinding import get_movement_cost, find_connection
+
+
+class DroneScheduler:
+    """Manages scheduling and movement of drones along a path."""
+
+    def __init__(self, data: Data, path: list[str]) -> None:
+        """
+        Initialize the drone scheduler.
+
+        Args:
+            data: The drone network configuration
+            path: The optimal path from start to end
+        """
+        self.data = data
+        self.path = path
+        self.drones: list[Drone] = []
+        self.current_turn = 0
+        self.next_drone_id = 0  # Track next drone to spawn
+        self.total_drones_to_spawn = data.nb_drones
+
+        # Limit drones to start hub capacity to prevent overflow
+        start_hub_capacity = data.hubs[data.start_hub].max_drones
+        initial_drones = min(data.nb_drones, start_hub_capacity)
+
+        # Create initial drones up to start hub capacity with staggering
+        # Each drone gets a unique stagger value (0-15) to prevent
+        # synchronized waves and spread drones out smoothly
+        for i in range(initial_drones):
+            stagger = (i * 3) % 16  # Creates even spacing of 3 between drones
+            self.drones.append(
+                Drone(
+                    drone_id=i,
+                    current_hub=data.start_hub,
+                    path_index=0,
+                    turns_at_hub=stagger,
+                    initial_stagger=stagger,
+                )
+            )
+            self.next_drone_id = i + 1
+
+    def get_hub_occupancy(self, hub_name: str) -> int:
+        """Count how many active drones are currently at a hub."""
+        return sum(
+            1
+            for d in self.drones
+            if d.current_hub == hub_name and not d.completed
+        )
+
+    def get_connection_usage(self, hub_a: str, hub_b: str) -> int:
+        """Count how many drones are currently traversing a connection."""
+        # Simplified version - in reality would track drones in transit
+        count = 0
+        for d in self.drones:
+            if not d.completed and d.path_index < len(self.path) - 1:
+                if (
+                    self.path[d.path_index] == hub_a
+                    and self.path[d.path_index + 1] == hub_b
+                ) or (
+                    self.path[d.path_index] == hub_b
+                    and self.path[d.path_index + 1] == hub_a
+                ):
+                    count += 1
+        return count
+
+    def can_move_drone(self, drone: Drone) -> bool:
+        """Check if a drone can move to the next hub."""
+        if drone.completed or drone.path_index >= len(self.path) - 1:
+            return False
+
+        next_hub = self.path[drone.path_index + 1]
+
+        # Check if drone has waited enough turns for movement cost + stagger
+        movement_cost = get_movement_cost(next_hub, self.data)
+        total_wait = movement_cost + drone.initial_stagger
+        if drone.turns_at_hub < total_wait:
+            return False
+
+        # Check hub capacity at next hub
+        next_hub_obj = self.data.hubs[next_hub]
+        if self.get_hub_occupancy(next_hub) >= next_hub_obj.max_drones:
+            return False
+
+        return True
+
+    def advance_turn(self) -> None:
+        """Advance simulation by one turn. Move drones individually.
+
+        Moves drones one at a time in drone ID order (FIFO with priority),
+        respecting capacity constraints. Prevents synchronized movement.
+        """
+        self.current_turn += 1
+
+        # Increment turn counter for all drones at hubs
+        for drone in self.drones:
+            if not drone.completed:
+                drone.turns_at_hub += 1
+
+        # Collect candidates: drones that have waited long enough to move
+        candidates = []
+        for drone in self.drones:
+            if drone.completed:
+                continue
+
+            if drone.path_index >= len(self.path) - 1:
+                continue
+
+            # Check if drone has waited enough for movement cost
+            next_hub = self.path[drone.path_index + 1]
+            movement_cost = get_movement_cost(next_hub, self.data)
+            if drone.turns_at_hub >= movement_cost:
+                candidates.append(drone)
+
+        # Sort candidates by drone ID for FIFO priority
+        candidates.sort(key=lambda d: d.drone_id)
+
+        # Track hub occupancy AFTER moves to check capacity
+        hub_after_moves = {}
+        for hub_name in self.data.hubs:
+            # Count all non-moving, active drones
+            hub_after_moves[hub_name] = sum(
+                1
+                for d in self.drones
+                if d.current_hub == hub_name
+                and not d.completed
+                and d not in candidates
+            )
+
+        # Track connection usage AFTER moves
+        def get_connection_key(hub_a: str, hub_b: str) -> tuple[str, str]:
+            """Normalize connection key (bidirectional)."""
+            return tuple(sorted([hub_a, hub_b]))  # type: ignore
+
+        connection_usage_after = {}
+        for conn in self.data.connections:
+            connection_usage_after[
+                get_connection_key(conn.hub_a, conn.hub_b)
+            ] = 0
+
+        # Move drones one at a time in priority order (by drone ID)
+        drones_to_move = []
+        for drone in candidates:
+            current_hub = self.path[drone.path_index]
+            next_hub = self.path[drone.path_index + 1]
+            next_hub_obj = self.data.hubs[next_hub]
+
+            # Check hub capacity
+            if hub_after_moves[next_hub] >= next_hub_obj.max_drones:
+                continue  # Hub is full, can't move
+
+            # Check connection capacity
+            conn_key = get_connection_key(current_hub, next_hub)
+            if conn_key in connection_usage_after:
+                conn = find_connection(current_hub, next_hub, self.data)
+                if (
+                    conn
+                    and connection_usage_after[conn_key]
+                    >= conn.max_link_capacity
+                ):
+                    continue  # Connection is full, can't move
+
+            # This drone can move!
+            drones_to_move.append(drone)
+            hub_after_moves[next_hub] += 1
+            if conn_key in connection_usage_after:
+                connection_usage_after[conn_key] += 1
+
+        # Move all approved drones simultaneously
+        for drone in drones_to_move:
+            drone.path_index += 1
+            drone.current_hub = self.path[drone.path_index]
+            # Reset wait counter (stagger applied via can_move_drone check)
+            drone.turns_at_hub = 0
+
+            # Check if drone reached the end
+            if drone.path_index >= len(self.path) - 1:
+                drone.completed = True
+
+        # Spawn new drones if capacity allows and we haven't spawned all yet
+        self._spawn_new_drones()
+
+    def _spawn_new_drones(self) -> None:
+        """Spawn new drones at start hub if capacity allows."""
+        if self.next_drone_id >= self.total_drones_to_spawn:
+            return  # All drones already spawned
+
+        start_hub_capacity = self.data.hubs[self.data.start_hub].max_drones
+        start_hub_occupancy = self.get_hub_occupancy(self.data.start_hub)
+
+        # Spawn as many drones as capacity allows
+        while (
+            self.next_drone_id < self.total_drones_to_spawn
+            and start_hub_occupancy < start_hub_capacity
+        ):
+            stagger = (
+                self.next_drone_id * 3
+            ) % 16  # Even spacing prevents synchronized movement
+            new_drone = Drone(
+                drone_id=self.next_drone_id,
+                current_hub=self.data.start_hub,
+                path_index=0,
+                turns_at_hub=stagger,
+                initial_stagger=stagger,
+            )
+            self.drones.append(new_drone)
+            self.next_drone_id += 1
+            start_hub_occupancy += 1
+
+    def run_simulation(self, max_turns: int = 1000) -> dict:
+        """
+        Run the full simulation until all drones reach the end or max_turns.
+
+        Args:
+            max_turns: Maximum number of turns to simulate
+
+        Returns:
+            Dictionary with simulation results
+        """
+        while (
+            self.current_turn < max_turns and not self.all_drones_completed()
+        ):
+            self.advance_turn()
+
+        return {
+            "total_turns": self.current_turn,
+            "all_completed": self.all_drones_completed(),
+            "drones": self.drones,
+            "completion_times": self.get_completion_times(),
+        }
+
+    def all_drones_completed(self) -> bool:
+        """Check if all drones have reached the end hub."""
+        return all(d.completed for d in self.drones)
+
+    def get_completion_times(self) -> dict[int, int]:
+        """Get the turn at which each drone completed (if completed)."""
+        times = {}
+        for drone in self.drones:
+            if drone.completed:
+                # Approximate completion time (refined during simulation)
+                times[drone.drone_id] = self.current_turn
+        return times
+
+    def get_drone_positions(self) -> dict[int, str]:
+        """Get current hub position of each drone."""
+        return {d.drone_id: self.path[d.path_index] for d in self.drones}

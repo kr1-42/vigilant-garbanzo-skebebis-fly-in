@@ -110,7 +110,7 @@ class ZoneInfoPopup:
 
         # Draw movement cost with color coding
         cost_display = (
-            f"∞"
+            "∞"
             if info["movement_cost"] == float("inf")
             else f"{info['movement_cost']:.1f}"
         )
