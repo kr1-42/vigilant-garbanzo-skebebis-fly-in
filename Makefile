@@ -9,8 +9,8 @@ SHELL := /bin/bash
 
 all: run
 
-run: $(NAME)
-	if [  -f "venv/bin/python3" ]; then \
+run:
+	@if [  -f "venv/bin/python3" ]; then \
 		source ./venv/bin/activate; \
 	else \
 		echo "Warning: venv not found, running venv"; \
@@ -18,15 +18,15 @@ run: $(NAME)
 		source ./venv/bin/activate; \
 		pip install -r requirements.txt; \
 	fi
-	@$(PYTHON) $(NAME) $(FILE)
+	@$(PYTHON) -m src $(FILE)
 
-test: $(NAME)
-	source ./venv/bin/activate
+test:
+	@source ./venv/bin/activate
 	@for file in $(MAPS); do \
 		echo "==================================="; \
 		echo "Running with $$file"; \
 		echo "==================================="; \
-		$(PYTHON) $(NAME) $$file; \
+		$(PYTHON) -m src $$file; \
 		echo ""; \
 	done
 

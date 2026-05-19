@@ -27,18 +27,15 @@ class DroneScheduler:
         start_hub_capacity = data.hubs[data.start_hub].max_drones
         initial_drones = min(data.nb_drones, start_hub_capacity)
 
-        # Create initial drones up to start hub capacity with staggering
-        # Each drone gets a unique stagger value (0-15) to prevent
-        # synchronized waves and spread drones out smoothly
+        # Create initial drones up to start hub capacity
         for i in range(initial_drones):
-            stagger = (i * 3) % 16  # Creates even spacing of 3 between drones
             self.drones.append(
                 Drone(
                     drone_id=i,
                     current_hub=data.start_hub,
                     path_index=0,
-                    turns_at_hub=stagger,
-                    initial_stagger=stagger,
+                    turns_at_hub=0,
+                    initial_stagger=0,
                 )
             )
             self.next_drone_id = i + 1
@@ -74,16 +71,48 @@ class DroneScheduler:
 
         next_hub = self.path[drone.path_index + 1]
 
-        # Check if drone has waited enough turns for movement cost + stagger
+        # Check if drone has waited enough turns for movement cost
         movement_cost = get_movement_cost(next_hub, self.data)
-        total_wait = movement_cost + drone.initial_stagger
-        if drone.turns_at_hub < total_wait:
+        if drone.turns_at_hub < movement_cost:
             return False
 
         # Check hub capacity at next hub
         next_hub_obj = self.data.hubs[next_hub]
         if self.get_hub_occupancy(next_hub) >= next_hub_obj.max_drones:
             return False
+
+        return True
+
+    def validate_capacity_constraints(self) -> bool:
+        """
+        Validate that current state respects all capacity constraints.
+        Returns True if valid, False if any constraint is violated.
+        Raises ValueError with details if validation fails.
+        """
+        # Check hub capacities
+        for hub_name, hub_obj in self.data.hubs.items():
+            occupancy = self.get_hub_occupancy(hub_name)
+            if occupancy > hub_obj.max_drones:
+                drones_at_hub = [
+                    d.drone_id
+                    for d in self.drones
+                    if d.current_hub == hub_name and not d.completed
+                ]
+                raise ValueError(
+                    f"Hub '{hub_name}' capacity exceeded: "
+                    f"{occupancy} drones (max: {hub_obj.max_drones}). "
+                    f"Drones: {drones_at_hub}"
+                )
+
+        # Check connection capacities
+        for conn in self.data.connections:
+            usage = self.get_connection_usage(conn.hub_a, conn.hub_b)
+            if usage > conn.max_link_capacity:
+                raise ValueError(
+                    f"Connection {conn.hub_a}-{conn.hub_b} capacity "
+                    f"exceeded: {usage} drones "
+                    f"(max: {conn.max_link_capacity})"
+                )
 
         return True
 
@@ -180,6 +209,12 @@ class DroneScheduler:
             if drone.path_index >= len(self.path) - 1:
                 drone.completed = True
 
+        # Validate capacity constraints after moves
+        try:
+            self.validate_capacity_constraints()
+        except ValueError as e:
+            raise RuntimeError(str(e)) from e
+
         # Spawn new drones if capacity allows and we haven't spawned all yet
         self._spawn_new_drones()
 
@@ -189,26 +224,31 @@ class DroneScheduler:
             return  # All drones already spawned
 
         start_hub_capacity = self.data.hubs[self.data.start_hub].max_drones
-        start_hub_occupancy = self.get_hub_occupancy(self.data.start_hub)
 
-        # Spawn as many drones as capacity allows
-        while (
-            self.next_drone_id < self.total_drones_to_spawn
-            and start_hub_occupancy < start_hub_capacity
-        ):
-            stagger = (
-                self.next_drone_id * 3
-            ) % 16  # Even spacing prevents synchronized movement
+        # Spawn drones while capacity allows (recalculate each time)
+        while self.next_drone_id < self.total_drones_to_spawn:
+            # Recalculate occupancy to ensure we don't exceed capacity
+            current_occupancy = self.get_hub_occupancy(self.data.start_hub)
+            if current_occupancy >= start_hub_capacity:
+                break  # Hub is at capacity, can't spawn more
+
             new_drone = Drone(
                 drone_id=self.next_drone_id,
                 current_hub=self.data.start_hub,
                 path_index=0,
-                turns_at_hub=stagger,
-                initial_stagger=stagger,
+                turns_at_hub=0,
+                initial_stagger=0,
             )
             self.drones.append(new_drone)
             self.next_drone_id += 1
-            start_hub_occupancy += 1
+
+        # Verify start hub doesn't exceed capacity after spawning
+        start_hub_occupancy = self.get_hub_occupancy(self.data.start_hub)
+        if start_hub_occupancy > start_hub_capacity:
+            raise RuntimeError(
+                f"Start hub capacity exceeded: "
+                f"{start_hub_occupancy} > {start_hub_capacity}"
+            )
 
     def run_simulation(self, max_turns: int = 1000) -> dict:
         """
