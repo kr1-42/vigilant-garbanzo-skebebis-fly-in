@@ -41,8 +41,8 @@ install:
 	@./venv/bin/pip install -r requirements.txt
 
 lint:
-	flake8 src/ fly-in.py
-	mypy src fly-in.py --warn-return-any --warn-unused-ignores --ignore-missing-imports --disallow-untyped-defs --check-untyped-defs
+	flake8 src/ 
+	mypy src --warn-return-any --warn-unused-ignores --ignore-missing-imports --disallow-untyped-defs --check-untyped-defs
 
 lint-strict:
 	flake8 src/

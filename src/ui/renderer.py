@@ -226,7 +226,11 @@ def draw_drones(
 
 
 def draw_simulation_info(
-    screen, scheduler, speed_multiplier: float = 1.0, is_complete: bool = False
+    screen,
+    scheduler,
+    speed_multiplier: float = 1.0,
+    is_complete: bool = False,
+    hub_sprite_name: str | None = None,
 ) -> None:
     """Draw simulation info text (turn number, drone completion status
     , and performance metrics)."""
@@ -253,6 +257,18 @@ def draw_simulation_info(
     screen.blit(completed_text, (10, 35))
     screen.blit(speed_text, (10, 55))
 
+    # Display hub sprite name
+    if hub_sprite_name:
+        hub_sprite_text = small_font.render(
+            f"Hub Sprite: {hub_sprite_name} ([/] to switch)",
+            True,
+            (100, 100, 0),
+        )
+        screen.blit(hub_sprite_text, (10, 75))
+        y_offset = 95
+    else:
+        y_offset = 75
+
     # Calculate and display performance metrics
     if scheduler.current_turn > 0 and len(scheduler.drones) > 0:
         # Drones moved per turn (efficiency)
@@ -267,7 +283,8 @@ def draw_simulation_info(
         efficiency_text = small_font.render(
             f"Avg drones/turn: {avg_efficiency:.1f}", True, (0, 100, 0)
         )
-        screen.blit(efficiency_text, (10, 75))
+        screen.blit(efficiency_text, (10, y_offset))
+        y_offset += 20
 
         # Average turns per drone
         completed_drones = [d for d in scheduler.drones if d.completed]
@@ -276,7 +293,7 @@ def draw_simulation_info(
             avg_turns_text = small_font.render(
                 f"Avg turns/drone: {avg_turns:.1f}", True, (100, 0, 0)
             )
-            screen.blit(avg_turns_text, (10, 95))
+            screen.blit(avg_turns_text, (10, y_offset))
 
     # Display final score if simulation is complete
     if is_complete:

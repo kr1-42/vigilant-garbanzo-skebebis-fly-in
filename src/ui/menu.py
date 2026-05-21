@@ -66,9 +66,9 @@ def display_map_menu(
                         selected_index = (selected_index + 1) % len(menu_items)
                 elif event.key == pygame.K_RETURN:
                     if menu_items[selected_index][0] == "map":
-                        return str(menu_items[selected_index][1][
-                            1
-                        ])  # Return file path
+                        return str(
+                            menu_items[selected_index][1][1]
+                        )  # Return file path
 
         # Draw menu
         screen.fill((40, 40, 40))
@@ -80,8 +80,9 @@ def display_map_menu(
         for i, (item_type, item_data) in enumerate(menu_items):
             if item_type == "header":
                 # Draw category header
-                text: Surface = font_normal.render(item_data,
-                                                   True, (255, 200, 0))
+                text: Surface = font_normal.render(
+                    item_data, True, (255, 200, 0)
+                )
                 screen.blit(text, (50, y_offset))
                 y_offset += 50
             else:

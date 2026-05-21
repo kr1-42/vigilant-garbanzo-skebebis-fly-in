@@ -2,12 +2,7 @@ import importlib
 
 
 def check_dependencies():
-    dependencies = [
-        "numpy",
-        "matplotlib",
-        "pandas",
-        "pygame"
-    ]
+    dependencies = ["numpy", "matplotlib", "pandas", "pygame"]
 
     try:
         for dep in dependencies:

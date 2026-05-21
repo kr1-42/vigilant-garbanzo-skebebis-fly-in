@@ -35,7 +35,7 @@ class Hub:
         if self.zone not in VALID_ZONE_TYPES:
             raise ValueError(
                 f"invalid zone type '{self.zone}'.",
-                f" Must be one of: {VALID_ZONE_TYPES}"
+                f" Must be one of: {VALID_ZONE_TYPES}",
             )
         if self.max_drones <= 0:
             raise ValueError(
@@ -61,7 +61,7 @@ class Connection:
         if self.max_link_capacity <= 0:
             raise ValueError(
                 "max_link_capacity must be",
-                f" positive, got {self.max_link_capacity}"
+                f" positive, got {self.max_link_capacity}",
             )
 
     def contains(self, hub_a: str, hub_b: str) -> bool:
@@ -122,8 +122,9 @@ class Data:
             if hub_a == hub_b:
                 raise ValueError("self-loop connections are not allowed")
             # Check for duplicate connections (bidirectional)
-            normalized: tuple[str, str] = cast(tuple[str, str],
-                                               tuple(sorted([hub_a, hub_b])))
+            normalized: tuple[str, str] = cast(
+                tuple[str, str], tuple(sorted([hub_a, hub_b]))
+            )
             if normalized in seen:
                 raise ValueError(f"duplicate connection: {hub_a}-{hub_b}")
             seen.add(normalized)

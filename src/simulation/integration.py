@@ -152,9 +152,7 @@ class SimulationWithMultiPath:
                 self.tracker.drone_positions[drone.drone_id] = new_pos
 
                 # Check if drone completed
-                path_idx = self.scheduler.drone_path_assignment[
-                    drone.drone_id
-                ]
+                path_idx = self.scheduler.drone_path_assignment[drone.drone_id]
                 drone_path = self.paths[path_idx]
                 if new_pos >= len(drone_path) - 1:
                     self.tracker.drone_completed.add(drone.drone_id)

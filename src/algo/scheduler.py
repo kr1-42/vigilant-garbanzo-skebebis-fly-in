@@ -69,10 +69,12 @@ class DroneScheduler:
         if drone.completed or drone.path_index >= len(self.path) - 1:
             return False
 
+        current_hub = self.path[drone.path_index]
         next_hub = self.path[drone.path_index + 1]
 
         # Check if drone has waited enough turns for movement cost
-        movement_cost = get_movement_cost(next_hub, self.data)
+        # (applies to current hub where drone is, not where it's going)
+        movement_cost = get_movement_cost(current_hub, self.data)
         if drone.turns_at_hub < movement_cost:
             return False
 
@@ -138,9 +140,9 @@ class DroneScheduler:
             if drone.path_index >= len(self.path) - 1:
                 continue
 
-            # Check if drone has waited enough for movement cost
-            next_hub = self.path[drone.path_index + 1]
-            movement_cost = get_movement_cost(next_hub, self.data)
+            # Check if drone has waited enough for movement cost at current hub
+            current_hub = self.path[drone.path_index]
+            movement_cost = get_movement_cost(current_hub, self.data)
             if drone.turns_at_hub >= movement_cost:
                 candidates.append(drone)
 
@@ -148,9 +150,10 @@ class DroneScheduler:
         candidates.sort(key=lambda d: d.drone_id)
 
         # Track hub occupancy AFTER moves to check capacity
+        # This counts: drones staying + drones entering (tracked as we go)
         hub_after_moves = {}
         for hub_name in self.data.hubs:
-            # Count all non-moving, active drones
+            # Count only drones staying at this hub (not moving away)
             hub_after_moves[hub_name] = sum(
                 1
                 for d in self.drones
@@ -158,6 +161,11 @@ class DroneScheduler:
                 and not d.completed
                 and d not in candidates
             )
+
+        # Track how many drones are entering each hub
+        drones_entering_hub = {}
+        for hub_name in self.data.hubs:
+            drones_entering_hub[hub_name] = 0
 
         # Track connection usage AFTER moves
         def get_connection_key(hub_a: str, hub_b: str) -> tuple[str, str]:
@@ -170,6 +178,11 @@ class DroneScheduler:
                 get_connection_key(conn.hub_a, conn.hub_b)
             ] = 0
 
+        # Track how many drones have already moved OUT of each hub this turn
+        drones_moved_from_hub = {}
+        for hub_name in self.data.hubs:
+            drones_moved_from_hub[hub_name] = 0
+
         # Move drones one at a time in priority order (by drone ID)
         drones_to_move = []
         for drone in candidates:
@@ -177,8 +190,17 @@ class DroneScheduler:
             next_hub = self.path[drone.path_index + 1]
             next_hub_obj = self.data.hubs[next_hub]
 
-            # Check hub capacity
-            if hub_after_moves[next_hub] >= next_hub_obj.max_drones:
+            # Restricted hubs limit outflow to 1 drone per turn
+            movement_cost = get_movement_cost(current_hub, self.data)
+            if movement_cost > 1 and drones_moved_from_hub[current_hub] > 0:
+                continue  # Only 1 drone exits restricted hub per turn
+
+            # Check hub capacity: staying drones + already entering drones
+            # + this drone cannot exceed max_drones
+            current_occupancy = (
+                hub_after_moves[next_hub] + drones_entering_hub[next_hub]
+            )
+            if current_occupancy >= next_hub_obj.max_drones:
                 continue  # Hub is full, can't move
 
             # Check connection capacity
@@ -194,7 +216,8 @@ class DroneScheduler:
 
             # This drone can move!
             drones_to_move.append(drone)
-            hub_after_moves[next_hub] += 1
+            drones_entering_hub[next_hub] += 1
+            drones_moved_from_hub[current_hub] += 1
             if conn_key in connection_usage_after:
                 connection_usage_after[conn_key] += 1
 
@@ -210,8 +233,52 @@ class DroneScheduler:
                 drone.completed = True
 
         # Validate capacity constraints after moves
+        # Only validate hubs and connections that were actually used this turn
         try:
-            self.validate_capacity_constraints()
+            # Check hub capacities
+            for hub_name, hub_obj in self.data.hubs.items():
+                occupancy = self.get_hub_occupancy(hub_name)
+                if occupancy > hub_obj.max_drones:
+                    drones_at_hub = [
+                        d.drone_id
+                        for d in self.drones
+                        if d.current_hub == hub_name and not d.completed
+                    ]
+                    raise ValueError(
+                        f"Hub '{hub_name}' capacity exceeded: "
+                        f"{occupancy} drones (max: {hub_obj.max_drones}). "
+                        f"Drones: {drones_at_hub}"
+                    )
+
+            # Check connection capacities - only for connections used by
+            # drones that moved this turn
+            for drone in drones_to_move:
+                # Drone moved from its previous hub to current hub
+                prev_hub = self.path[drone.path_index - 1]
+                curr_hub = self.path[drone.path_index]
+
+                # Count how many OTHER drones from drones_to_move also used
+                # the same connection this turn
+                connection_count = 1  # This drone
+                for other in drones_to_move:
+                    if other is drone:
+                        continue
+                    other_prev = self.path[other.path_index - 1]
+                    other_curr = self.path[other.path_index]
+                    same_connection = (
+                        other_prev == prev_hub and other_curr == curr_hub
+                    ) or (other_prev == curr_hub and other_curr == prev_hub)
+                    if same_connection:
+                        connection_count += 1
+
+                conn = find_connection(prev_hub, curr_hub, self.data)
+                if conn and connection_count > conn.max_link_capacity:
+                    raise ValueError(
+                        f"Connection {prev_hub}-{curr_hub} capacity "
+                        f"exceeded: {connection_count} drones "
+                        f"(max: {conn.max_link_capacity})"
+                    )
+
         except ValueError as e:
             raise RuntimeError(str(e)) from e
 

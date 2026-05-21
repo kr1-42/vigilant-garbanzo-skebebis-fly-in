@@ -45,9 +45,7 @@ class MultiPathDroneScheduler:
             min_hub_capacity = min(
                 self.data.hubs[hub].max_drones for hub in path
             )
-            drones_for_path = min(
-                min_hub_capacity, num_drones - drone_idx
-            )
+            drones_for_path = min(min_hub_capacity, num_drones - drone_idx)
 
             # Create drones for this path with individual staggering
             for i in range(drones_for_path):
@@ -102,10 +100,12 @@ class MultiPathDroneScheduler:
         if drone.path_index >= len(path) - 1:
             return False
 
+        current_hub = path[drone.path_index]
         next_hub = path[drone.path_index + 1]
 
         # Check if drone has waited enough turns for movement cost
-        movement_cost = get_movement_cost(next_hub, self.data)
+        # (applies to current hub where drone is, not where it's going)
+        movement_cost = get_movement_cost(current_hub, self.data)
         if drone.turns_at_hub < movement_cost:
             return False
 
@@ -152,8 +152,9 @@ class MultiPathDroneScheduler:
                 continue
 
             # Check if drone has waited enough for movement cost
-            next_hub = path[drone.path_index + 1]
-            movement_cost = get_movement_cost(next_hub, self.data)
+            # (applies to current hub where drone is, not where it's going)
+            current_hub = path[drone.path_index]
+            movement_cost = get_movement_cost(current_hub, self.data)
             if drone.turns_at_hub >= movement_cost:
                 candidates.append(drone)
 

@@ -8,7 +8,7 @@ from .constants import ZONE_COSTS
 def get_movement_cost(hub_name: str, data: Data) -> int:
     """Get movement cost (turns) to enter a hub based on zone type."""
     hub = data.hubs[hub_name]
-    return ZONE_COSTS.get(hub.zone, 1)
+    return int(ZONE_COSTS.get(hub.zone, 1))
 
 
 def is_hub_accessible(hub_name: str, data: Data) -> bool:
@@ -17,7 +17,9 @@ def is_hub_accessible(hub_name: str, data: Data) -> bool:
     return hub.zone != "blocked"
 
 
-def find_connection(hub_a: str, hub_b: str, data: Data):
+def find_connection(
+    hub_a: str, hub_b: str, data: Data
+):
     """Find the connection between two hubs."""
     for conn in data.connections:
         if conn.contains(hub_a, hub_b):

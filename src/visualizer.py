@@ -30,10 +30,47 @@ WINDOW_HEIGHT = 800
 DRONE_GIF = "sprites/FO1_Fire_critical_hit.gif"
 HUB_GIF = "sprites/Maroboaa_se.gif"
 
+# Available hub sprites (excluding FO1_Fire_critical_hit.gif)
+AVAILABLE_HUB_SPRITES = [
+    "sprites/Maroboaa_se.gif",
+    "sprites/Jacoren_death_animation.gif",
+    "sprites/Mutant1.gif",
+]
+
 DRONE_GIF_SIZE = (60, 60)
 HUB_GIF_SIZE = (40, 40)
 
 DEFAULT_GIF_DURATION = 500
+
+
+def load_hub_sprite(sprite_index: int) -> tuple[list | None, int, str]:
+    """Load hub sprite by index from AVAILABLE_HUB_SPRITES.
+
+    Args:
+        sprite_index: Index in AVAILABLE_HUB_SPRITES
+
+    Returns:
+        Tuple of (frames, duration_ms, sprite_name)
+    """
+    if 0 <= sprite_index < len(AVAILABLE_HUB_SPRITES):
+        sprite_path = AVAILABLE_HUB_SPRITES[sprite_index]
+        sprite_name = sprite_path.split("/")[-1].replace(".gif", "")
+
+        hub_gif_result = load_gif_frames(
+            sprite_path,
+            max_width=HUB_GIF_SIZE[0],
+            max_height=HUB_GIF_SIZE[1],
+        )
+        frames = hub_gif_result[0] if hub_gif_result else None
+        duration = (
+            hub_gif_result[1]
+            if hub_gif_result
+            else DEFAULT_GIF_DURATION
+        )
+
+        return frames, duration, sprite_name
+
+    return None, DEFAULT_GIF_DURATION, "unknown"
 
 
 def visualize(data: Data) -> None:
@@ -63,13 +100,13 @@ def visualize(data: Data) -> None:
         gif_frames = gif_result[0] if gif_result else None
         gif_duration = gif_result[1] if gif_result else DEFAULT_GIF_DURATION
 
-        hub_gif_result = load_gif_frames(
-            HUB_GIF, max_width=HUB_GIF_SIZE[0], max_height=HUB_GIF_SIZE[1]
-        )
-        hub_gif_frames = hub_gif_result[0] if hub_gif_result else None
-        hub_gif_duration = (
-            hub_gif_result[1] if hub_gif_result else DEFAULT_GIF_DURATION
-        )
+        # Initialize hub sprite with first available sprite
+        current_hub_sprite_index = 0
+        (
+            hub_gif_frames,
+            hub_gif_duration,
+            current_hub_sprite_name,
+        ) = load_hub_sprite(current_hub_sprite_index)
 
         # Initialize simulation state
         turn_elapsed = 0
@@ -164,6 +201,31 @@ def visualize(data: Data) -> None:
                         event.key == pygame.K_DOWN and not simulation_complete
                     ):
                         speed_multiplier = max(speed_multiplier - 0.5, 0.25)
+                    # Hub sprite switching
+                    elif (
+                        event.key == pygame.K_LEFTBRACKET
+                        and not simulation_complete
+                    ):
+                        current_hub_sprite_index = (
+                            current_hub_sprite_index - 1
+                        ) % len(AVAILABLE_HUB_SPRITES)
+                        (
+                            hub_gif_frames,
+                            hub_gif_duration,
+                            current_hub_sprite_name,
+                        ) = load_hub_sprite(current_hub_sprite_index)
+                    elif (
+                        event.key == pygame.K_RIGHTBRACKET
+                        and not simulation_complete
+                    ):
+                        current_hub_sprite_index = (
+                            current_hub_sprite_index + 1
+                        ) % len(AVAILABLE_HUB_SPRITES)
+                        (
+                            hub_gif_frames,
+                            hub_gif_duration,
+                            current_hub_sprite_name,
+                        ) = load_hub_sprite(current_hub_sprite_index)
                     # Menu navigation (when simulation is complete)
                     elif event.key == pygame.K_UP and simulation_complete:
                         selected_menu_index = (selected_menu_index - 1) % len(
@@ -272,6 +334,7 @@ def visualize(data: Data) -> None:
                     tracking.scheduler if tracking else None,
                     speed_multiplier,
                     simulation_complete,
+                    current_hub_sprite_name,
                 )
 
                 # Draw hover popup if mouse is over a hub

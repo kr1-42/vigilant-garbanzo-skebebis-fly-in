@@ -89,12 +89,12 @@ def parse_text(text: list[str]) -> Data:
 
                 # Parse and validate coordinates
                 try:
-                    x = float(x_str)
-                    y = float(y_str)
+                    x = int(x_str)
+                    y = int(y_str)
                 except ValueError:
                     raise ValueError(
                         f"invalid coordinates: x='{x_str}', y='{y_str}'",
-                        " (expected floats)"
+                        " (expected integers)",
                     )
 
                 if not (-1e6 <= x <= 1e6 and -1e6 <= y <= 1e6):
@@ -110,7 +110,7 @@ def parse_text(text: list[str]) -> Data:
                 if zone not in VALID_ZONE_TYPES:
                     raise ValueError(
                         f"invalid zone type '{zone}'.",
-                        f" Must be one of: {VALID_ZONE_TYPES}"
+                        f" Must be one of: {VALID_ZONE_TYPES}",
                     )
 
                 # Validate and get max_drones
@@ -119,7 +119,7 @@ def parse_text(text: list[str]) -> Data:
                 except ValueError:
                     raise ValueError(
                         f"invalid max_drones value: {metadata['max_drones']}",
-                        " (expected positive integer)"
+                        " (expected positive integer)",
                     )
                 if max_drones <= 0:
                     raise ValueError(
@@ -161,7 +161,7 @@ def parse_text(text: list[str]) -> Data:
                 if "-" not in conn_str:
                     raise ValueError(
                         f"invalid connection format: '{conn_str}'",
-                        " (expected: hub_a-hub_b)"
+                        " (expected: hub_a-hub_b)",
                     )
 
                 parts = conn_str.split("-", 1)
@@ -187,12 +187,12 @@ def parse_text(text: list[str]) -> Data:
                     raise ValueError(
                         "invalid max_link_capacity: ",
                         f"'{metadata['max_link_capacity']}'",
-                        " (expected positive integer)"
+                        " (expected positive integer)",
                     )
                 if max_link_capacity <= 0:
                     raise ValueError(
                         "max_link_capacity must be positive,",
-                        f" got {max_link_capacity}"
+                        f" got {max_link_capacity}",
                     )
 
                 conn = Connection(

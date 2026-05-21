@@ -22,7 +22,7 @@ def main_parser() -> Data:
     if check_dependencies() is False:
         raise ImportError(
             "Missing dependencies. Please install them ",
-            "before running the program."
+            "before running the program.",
         )
 
     filename: str = argv[1]

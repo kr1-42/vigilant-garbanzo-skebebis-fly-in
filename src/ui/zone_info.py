@@ -108,6 +108,14 @@ class ZoneInfoPopup:
         screen.blit(zone_text, (popup_x + self.padding, y_offset))
         y_offset += self.line_height
 
+        # Draw hub color if it exists
+        if hub.color:
+            color_text = self.small_font.render(
+                f"Color: {hub.color}", True, self.text_color
+            )
+            screen.blit(color_text, (popup_x + self.padding, y_offset))
+            y_offset += self.line_height
+
         # Draw movement cost with color coding
         cost_display = (
             "∞"
