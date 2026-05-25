@@ -41,7 +41,7 @@ install:
 	@./venv/bin/pip install -r requirements.txt
 
 lint:
-	flake8 src/ 
+	flake8 src/
 	mypy src --warn-return-any --warn-unused-ignores --ignore-missing-imports --disallow-untyped-defs --check-untyped-defs
 
 lint-strict:
@@ -51,4 +51,6 @@ lint-strict:
 
 clean:
 	rm -rf venv __pycache__ .mypy_cache .flake8_cache
+	rm -rf src/__pycache__
+	rm -rf src/*/__pycache__
 
