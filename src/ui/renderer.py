@@ -202,7 +202,7 @@ def draw_drones(
                 * math.pi
                 / 180
             )
-            offset_dist = 20
+            offset_dist = 40
             drone_x = int(screen_x + offset_dist * math.cos(offset_angle))
             drone_y = int(screen_y + offset_dist * math.sin(offset_angle))
 

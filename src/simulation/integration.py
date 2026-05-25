@@ -43,16 +43,25 @@ class SimulationWithTracking:
         # Advance scheduler
         self.scheduler.advance_turn()
 
-        # Record movements
+        # Record all drone positions for this turn
+        # This includes drones that didn't move (waiting at hubs)
         for drone in self.scheduler.drones:
-            old_pos = positions_before[drone.drone_id]
+            if drone.completed:
+                continue
+
+            old_pos = positions_before.get(drone.drone_id, drone.path_index)
             new_pos = drone.path_index
 
-            # If drone moved to a new position, record it
+            # If drone moved, record the movement
             if new_pos > old_pos:
-                self.tracker.record_movement(drone.drone_id, old_pos, new_pos)
+                self.tracker.record_movement(
+                    drone.drone_id, old_pos, new_pos
+                )
+            else:
+                # Drone didn't move, but record its current position
+                self.tracker.record_position(drone.drone_id, new_pos)
 
-        # Print output for this turn if enabled (using tracker's current turn)
+        # Print output for this turn if enabled
         if self.enable_live_output:
             self.formatter.print_turn_output(self.tracker.current_turn)
 
@@ -131,31 +140,41 @@ class SimulationWithMultiPath:
 
         # Record movements - for multi-path, record actual hub positions
         for drone in self.scheduler.drones:
-            # Skip if this drone wasn't in positions_before
-            # (newly spawned this turn)
-            if drone.drone_id not in positions_before:
+            if drone.completed:
                 continue
 
-            old_pos = positions_before[drone.drone_id]
-            new_pos = drone.path_index
+            if drone.drone_id not in positions_before:
+                # Newly spawned drone, record at current hub
+                turn = self.tracker.current_turn
+                if turn not in self.tracker.movement_history:
+                    self.tracker.movement_history[turn] = []
+                self.tracker.movement_history[turn].append(
+                    (drone.drone_id, drone.current_hub)
+                )
+                self.tracker.drone_positions[drone.drone_id] = 0
+            else:
+                old_pos = positions_before[drone.drone_id]
+                new_pos = drone.path_index
 
-            # If drone moved to a new position, record it
-            if new_pos > old_pos:
-                # For multi-path, directly record hub destination
+                # Record position (movement or stationary)
                 turn = self.tracker.current_turn
                 if turn not in self.tracker.movement_history:
                     self.tracker.movement_history[turn] = []
 
+                # Add this drone's current position
                 self.tracker.movement_history[turn].append(
                     (drone.drone_id, drone.current_hub)
                 )
                 self.tracker.drone_positions[drone.drone_id] = new_pos
 
                 # Check if drone completed
-                path_idx = self.scheduler.drone_path_assignment[drone.drone_id]
-                drone_path = self.paths[path_idx]
-                if new_pos >= len(drone_path) - 1:
-                    self.tracker.drone_completed.add(drone.drone_id)
+                if new_pos > old_pos:
+                    path_idx = (
+                        self.scheduler.drone_path_assignment[drone.drone_id]
+                    )
+                    drone_path = self.paths[path_idx]
+                    if new_pos >= len(drone_path) - 1:
+                        self.tracker.drone_completed.add(drone.drone_id)
 
         # Print output for this turn if enabled
         if self.enable_live_output:

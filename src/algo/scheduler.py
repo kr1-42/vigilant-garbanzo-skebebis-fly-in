@@ -32,7 +32,7 @@ class DroneScheduler:
             self.drones.append(
                 Drone(
                     drone_id=i,
-                    current_hub=data.start_hub,
+                    current_hub=path[0],
                     path_index=0,
                     turns_at_hub=0,
                     initial_stagger=0,
@@ -163,6 +163,7 @@ class DroneScheduler:
             )
 
         # Track how many drones are entering each hub
+
         drones_entering_hub = {}
         for hub_name in self.data.hubs:
             drones_entering_hub[hub_name] = 0
@@ -301,7 +302,7 @@ class DroneScheduler:
 
             new_drone = Drone(
                 drone_id=self.next_drone_id,
-                current_hub=self.data.start_hub,
+                current_hub=self.path[0],
                 path_index=0,
                 turns_at_hub=0,
                 initial_stagger=0,

@@ -49,6 +49,34 @@ class DroneMovementTracker:
         if new_path_index >= len(self.path) - 1:
             self.drone_completed.add(drone_id)
 
+    def record_position(self, drone_id: int, path_index: int) -> None:
+        """
+        Record the current position of a drone for tracking.
+
+        Args:
+            drone_id: The unique drone identifier
+            path_index: The drone's current position index in the path
+        """
+        if self.current_turn not in self.movement_history:
+            self.movement_history[self.current_turn] = []
+
+        destination = self.path[path_index]
+        # Check if we already recorded this drone this turn
+        # (avoid duplicates from record_movement calls)
+        already_recorded = any(
+            d[0] == drone_id
+            for d in self.movement_history[self.current_turn]
+        )
+        if not already_recorded:
+            self.movement_history[self.current_turn].append(
+                (drone_id, destination)
+            )
+        self.drone_positions[drone_id] = path_index
+
+        # Check if drone reached the end
+        if path_index >= len(self.path) - 1:
+            self.drone_completed.add(drone_id)
+
     def advance_turn(self) -> None:
         """Advance to the next turn."""
         self.current_turn += 1

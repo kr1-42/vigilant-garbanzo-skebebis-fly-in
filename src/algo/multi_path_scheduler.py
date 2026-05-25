@@ -109,14 +109,12 @@ class MultiPathDroneScheduler:
         if drone.turns_at_hub < movement_cost:
             return False
 
-        # Check hub capacity at next hub (count drones going to this hub)
-        path_idx = self.drone_path_assignment[drone.drone_id]
+        # Check hub capacity at next hub
+        # Count ALL drones currently at next_hub (from any path)
         next_hub_occupancy = sum(
             1
             for d in self.drones
-            if not d.completed
-            and self.drone_path_assignment[d.drone_id] == path_idx
-            and path[d.path_index] == next_hub
+            if not d.completed and d.current_hub == next_hub
         )
 
         next_hub_obj = self.data.hubs[next_hub]
@@ -161,18 +159,6 @@ class MultiPathDroneScheduler:
         # Sort candidates by drone ID for FIFO priority
         candidates.sort(key=lambda d: d.drone_id)
 
-        # Track hub occupancy AFTER moves (excluding candidates leaving)
-        hub_after_moves = {}
-        for hub_name in self.data.hubs:
-            # Count all non-moving, active drones
-            hub_after_moves[hub_name] = sum(
-                1
-                for d in self.drones
-                if d.current_hub == hub_name
-                and not d.completed
-                and d not in candidates
-            )
-
         # Track connection usage AFTER moves
         def get_connection_key(hub_a: str, hub_b: str) -> tuple[str, str]:
             """Normalize connection key (bidirectional)."""
@@ -186,14 +172,26 @@ class MultiPathDroneScheduler:
 
         # Move drones one at a time in priority order (by drone ID)
         drones_to_move = []
+        drones_moving_to_hub = {}  # track drones approved to move to each hub
+        for hub_name in self.data.hubs:
+            drones_moving_to_hub[hub_name] = 0
+
         for drone in candidates:
             path = self.get_drone_path(drone)
             current_hub = path[drone.path_index]
             next_hub = path[drone.path_index + 1]
             next_hub_obj = self.data.hubs[next_hub]
 
-            # Check hub capacity
-            if hub_after_moves[next_hub] >= next_hub_obj.max_drones:
+            # Check hub capacity: current occupancy + approved incoming drones
+            current_occupancy = sum(
+                1
+                for d in self.drones
+                if not d.completed and d.current_hub == next_hub
+            )
+            total_occupancy = current_occupancy + drones_moving_to_hub[
+                next_hub
+            ]
+            if total_occupancy >= next_hub_obj.max_drones:
                 continue  # Hub is full, can't move
 
             # Check connection capacity
@@ -209,7 +207,7 @@ class MultiPathDroneScheduler:
 
             # This drone can move!
             drones_to_move.append(drone)
-            hub_after_moves[next_hub] += 1
+            drones_moving_to_hub[next_hub] += 1
             if conn_key in connection_usage_after:
                 connection_usage_after[conn_key] += 1
 
@@ -224,6 +222,25 @@ class MultiPathDroneScheduler:
             # Check if drone reached the end
             if drone.path_index >= len(path) - 1:
                 drone.completed = True
+
+        # Validate capacity constraints after moves
+        try:
+            # Check hub capacities
+            for hub_name, hub_obj in self.data.hubs.items():
+                occupancy = self.get_hub_occupancy(hub_name)
+                if occupancy > hub_obj.max_drones:
+                    drones_at_hub = [
+                        d.drone_id
+                        for d in self.drones
+                        if d.current_hub == hub_name and not d.completed
+                    ]
+                    raise ValueError(
+                        f"Hub '{hub_name}' capacity exceeded: "
+                        f"{occupancy} drones (max: {hub_obj.max_drones}). "
+                        f"Drones: {drones_at_hub}"
+                    )
+        except ValueError as e:
+            raise RuntimeError(str(e)) from e
 
         # Spawn new drones if capacity allows and we haven't spawned all yet
         self._spawn_new_drones()
