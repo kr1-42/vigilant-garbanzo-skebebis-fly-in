@@ -1,0 +1,63 @@
+# Custom Level 2: Feedback loop puzzle with resource sharing
+# Drones must be routed efficiently around a cycle with limited shared resources
+nb_drones: 45
+
+start_hub: start 0 -2 [color=green max_drones=10]
+
+# === Main loop structure ===
+hub: loop_north 3 -1 [zone=restricted color=blue max_drones=2]
+hub: loop_east 6 0 [zone=restricted color=blue max_drones=2]
+hub: loop_south 3 1 [zone=restricted color=blue max_drones=2]
+hub: loop_west 0 0 [zone=restricted color=blue max_drones=2]
+
+# === Shared critical resource ===
+hub: resource_hub 3 0 [color=red max_drones=3]
+
+# === Alternative bypass paths ===
+hub: bypass_fast1 6 3 [zone=priority color=cyan max_drones=2]
+hub: bypass_fast2 9 1 [zone=priority color=cyan max_drones=2]
+hub: bypass_fast3 6 -2 [zone=priority color=cyan max_drones=2]
+
+# === Distribution/collection points ===
+hub: distribute_a 9 2 [color=orange max_drones=3]
+hub: distribute_b 12 1 [color=orange max_drones=3]
+hub: distribute_c 9 -1 [color=orange max_drones=3]
+
+end_hub: goal 15 1 [color=gold max_drones=10]
+
+# Initial split
+connection: start-resource_hub [max_link_capacity=4]
+connection: start-bypass_fast1 [max_link_capacity=3]
+connection: start-bypass_fast3 [max_link_capacity=3]
+
+# Main loop connections
+connection: resource_hub-loop_north
+connection: loop_north-loop_east
+connection: loop_east-resource_hub
+connection: resource_hub-loop_south
+connection: loop_south-loop_west
+connection: loop_west-resource_hub
+
+# Loop to distribution
+connection: loop_north-distribute_a
+connection: loop_east-distribute_b
+connection: loop_south-distribute_c
+
+# Bypass paths
+connection: bypass_fast1-distribute_a [max_link_capacity=2]
+connection: bypass_fast1-bypass_fast2
+connection: bypass_fast2-distribute_b
+connection: bypass_fast2-bypass_fast3
+connection: bypass_fast3-distribute_c
+
+# Alternative from resource hub directly to bypass
+connection: resource_hub-bypass_fast2 [max_link_capacity=1]
+
+# Distribution to goal
+connection: distribute_a-goal [max_link_capacity=2]
+connection: distribute_b-goal [max_link_capacity=3]
+connection: distribute_c-goal [max_link_capacity=2]
+
+# Cross-distribution connections for flexibility
+connection: distribute_a-distribute_b [max_link_capacity=1]
+connection: distribute_b-distribute_c [max_link_capacity=1]

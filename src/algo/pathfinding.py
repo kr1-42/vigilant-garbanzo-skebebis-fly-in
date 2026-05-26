@@ -17,9 +17,7 @@ def is_hub_accessible(hub_name: str, data: Data) -> bool:
     return hub.zone != "blocked"
 
 
-def find_connection(
-    hub_a: str, hub_b: str, data: Data
-):
+def find_connection(hub_a: str, hub_b: str, data: Data):
     """Find the connection between two hubs."""
     for conn in data.connections:
         if conn.contains(hub_a, hub_b):

@@ -1,0 +1,46 @@
+# Custom Level 1: CROSSROADS
+# 6 drones, 3 parallel paths with different characteristics.
+# All paths are valid and usable simultaneously.
+# Key challenge: distribute drones optimally across paths with different
+# capacities and costs. A naive "single file" approach will be too slow.
+# Target: <= 8 turns
+#
+# Layout:
+#   start --> [fast_a1 -> fast_a2] --> goal        (cap 2, short)
+#   start --> [main_b1 -> main_b2 -> main_b3] --> goal  (cap 2, medium)
+#   start --> [wide_c1] --> goal                   (cap 3, but restricted=cost 2)
+#
+# Optimal strategy: send 2 on path A, 2 on path B, 2 on path C in parallel.
+
+nb_drones: 6
+
+start_hub: start 0 0 [color=green max_drones=6]
+
+# Path A: short, capacity 2
+hub: fast_a1 1 2 [color=cyan max_drones=2]
+hub: fast_a2 2 2 [color=cyan max_drones=2]
+
+# Path B: medium, capacity 2
+hub: main_b1 1 0 [color=blue max_drones=2]
+hub: main_b2 2 0 [color=blue max_drones=2]
+hub: main_b3 3 0 [color=blue max_drones=2]
+
+# Path C: wide but restricted (costs 2 turns to enter)
+hub: wide_c1 1 -2 [zone=restricted color=orange max_drones=2]
+
+end_hub: goal 4 0 [color=green max_drones=6]
+
+# Path A connections
+connection: start-fast_a1 [max_link_capacity=2]
+connection: fast_a1-fast_a2 [max_link_capacity=2]
+connection: fast_a2-goal [max_link_capacity=2]
+
+# Path B connections
+connection: start-main_b1 [max_link_capacity=2]
+connection: main_b1-main_b2 [max_link_capacity=2]
+connection: main_b2-main_b3 [max_link_capacity=2]
+connection: main_b3-goal [max_link_capacity=2]
+
+# Path C connections (restricted zone costs 2 turns)
+connection: start-wide_c1 [max_link_capacity=2]
+connection: wide_c1-goal [max_link_capacity=2]

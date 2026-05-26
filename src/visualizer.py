@@ -63,9 +63,7 @@ def load_hub_sprite(sprite_index: int) -> tuple[list | None, int, str]:
         )
         frames = hub_gif_result[0] if hub_gif_result else None
         duration = (
-            hub_gif_result[1]
-            if hub_gif_result
-            else DEFAULT_GIF_DURATION
+            hub_gif_result[1] if hub_gif_result else DEFAULT_GIF_DURATION
         )
 
         return frames, duration, sprite_name

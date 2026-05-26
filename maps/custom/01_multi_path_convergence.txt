@@ -1,0 +1,68 @@
+# Custom Level 1: Multi-path convergence with dynamic routing
+# Multiple parallel paths that require smart distribution of drones
+nb_drones: 8
+
+start_hub: start 0 0 [color=green max_drones=8]
+
+# === Three main distribution paths ===
+hub: path_a_1 1 2 [color=blue max_drones=3]
+hub: path_a_2 2 2 [color=blue max_drones=2]
+hub: path_a_3 3 2 [color=blue max_drones=2]
+
+hub: path_b_1 1 0 [color=cyan max_drones=3]
+hub: path_b_2 2 0 [color=cyan max_drones=3]
+hub: path_b_3 3 0 [color=cyan max_drones=2]
+
+hub: path_c_1 1 -2 [color=magenta max_drones=3]
+hub: path_c_2 2 -2 [color=magenta max_drones=2]
+hub: path_c_3 3 -2 [color=magenta max_drones=2]
+
+# === Mid-point convergence zones ===
+hub: conv_upper 4 1 [color=yellow max_drones=4]
+hub: conv_middle 4 0 [color=yellow max_drones=4]
+hub: conv_lower 4 -1 [color=yellow max_drones=4]
+
+# === Final stretch with shared paths ===
+hub: final_junction 5 0 [color=orange max_drones=6]
+hub: final_gate1 6 0 [color=red max_drones=3]
+hub: final_gate2 6 1 [color=red max_drones=3]
+
+end_hub: goal 7 0 [color=gold max_drones=8]
+
+# Initial distribution from start
+connection: start-path_a_1 [max_link_capacity=2]
+connection: start-path_b_1 [max_link_capacity=3]
+connection: start-path_c_1 [max_link_capacity=2]
+
+# Path A progression
+connection: path_a_1-path_a_2 [max_link_capacity=2]
+connection: path_a_2-path_a_3 [max_link_capacity=2]
+connection: path_a_3-conv_upper [max_link_capacity=2]
+
+# Path B progression
+connection: path_b_1-path_b_2 [max_link_capacity=3]
+connection: path_b_2-path_b_3 [max_link_capacity=2]
+connection: path_b_3-conv_middle [max_link_capacity=2]
+
+# Path C progression
+connection: path_c_1-path_c_2 [max_link_capacity=2]
+connection: path_c_2-path_c_3 [max_link_capacity=2]
+connection: path_c_3-conv_lower [max_link_capacity=2]
+
+# Cross-connections for routing flexibility
+connection: conv_upper-conv_middle
+connection: conv_middle-conv_lower
+connection: path_a_2-path_b_2
+connection: path_b_2-path_c_2
+
+# Final convergence
+connection: conv_upper-final_junction [max_link_capacity=2]
+connection: conv_middle-final_junction [max_link_capacity=3]
+connection: conv_lower-final_junction [max_link_capacity=2]
+
+# Final double-gate (requires smart distribution)
+connection: final_junction-final_gate1 [max_link_capacity=3]
+connection: final_junction-final_gate2 [max_link_capacity=3]
+
+connection: final_gate1-goal [max_link_capacity=3]
+connection: final_gate2-goal [max_link_capacity=3]

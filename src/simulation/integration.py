@@ -54,9 +54,7 @@ class SimulationWithTracking:
 
             # If drone moved, record the movement
             if new_pos > old_pos:
-                self.tracker.record_movement(
-                    drone.drone_id, old_pos, new_pos
-                )
+                self.tracker.record_movement(drone.drone_id, old_pos, new_pos)
             else:
                 # Drone didn't move, but record its current position
                 self.tracker.record_position(drone.drone_id, new_pos)
@@ -169,9 +167,9 @@ class SimulationWithMultiPath:
 
                 # Check if drone completed
                 if new_pos > old_pos:
-                    path_idx = (
-                        self.scheduler.drone_path_assignment[drone.drone_id]
-                    )
+                    path_idx = self.scheduler.drone_path_assignment[
+                        drone.drone_id
+                    ]
                     drone_path = self.paths[path_idx]
                     if new_pos >= len(drone_path) - 1:
                         self.tracker.drone_completed.add(drone.drone_id)

@@ -1,0 +1,261 @@
+# CUSTOM MAP: THE LABYRINTH CITY
+# 55 drones - non-linear urban grid with deliberate backtracking routes
+# Topology: 3 city districts connected by bridges, with one-way detours
+# that force drones to move backward (decreasing x) before progressing.
+# A greedy shortest-path algorithm will get stuck; smart flow routing wins.
+# Performance target: < 45 turns
+nb_drones: 50
+ 
+# =============================================
+# DISTRICT ALPHA (x: 0 -> 4)
+# Entry zone, splits into 3 sub-routes
+# =============================================
+start_hub: depot 0 0 [color=green max_drones=55]
+ 
+# Main entry arteries
+hub: alpha_gate_n 1 2 [zone=priority color=lime max_drones=4]
+hub: alpha_gate_c 1 0 [color=cyan max_drones=3]
+hub: alpha_gate_s 1 -2 [color=cyan max_drones=3]
+ 
+# Northern sub-district (flows forward normally)
+hub: alpha_n1 2 3 [color=blue max_drones=3]
+hub: alpha_n2 3 3 [color=blue max_drones=3]
+hub: alpha_n3 4 3 [zone=priority color=lime max_drones=4]
+ 
+# Central sub-district (has a BACKTRACK loop via x=2 detour)
+hub: alpha_c1 2 0 [color=blue max_drones=3]
+hub: alpha_detour 1 -1 [zone=restricted color=sienna max_drones=2]
+# ^^ goes back to x=1 before continuing
+hub: alpha_c2 2 -1 [zone=restricted color=sienna max_drones=2]
+hub: alpha_c3 3 0 [color=blue max_drones=3]
+hub: alpha_c4 4 0 [color=blue max_drones=3]
+ 
+# Southern sub-district
+hub: alpha_s1 2 -3 [color=blue max_drones=3]
+hub: alpha_s2 3 -2 [color=blue max_drones=3]
+hub: alpha_s3 4 -3 [zone=priority color=lime max_drones=3]
+ 
+# Blocked walls forcing routing around them
+hub: wall_a1 3 1 [zone=blocked color=gray]
+hub: wall_a2 3 -1 [zone=blocked color=gray]
+ 
+# =============================================
+# BRIDGE SECTOR (x: 4 -> 6) — capacity bottleneck
+# 3 bridges, each with limited throughput
+# =============================================
+hub: bridge_n 5 3 [color=orange max_drones=2]
+hub: bridge_c 5 0 [color=orange max_drones=2]
+hub: bridge_s 5 -3 [color=orange max_drones=2]
+ 
+# Underground passage: goes BACKWARD to x=3 to cross under the river
+hub: underpass_w 3 5 [zone=restricted color=purple max_drones=3]
+hub: underpass_e 6 5 [zone=restricted color=purple max_drones=3]
+# connects alpha district directly to beta, bypassing bridge bottleneck
+# but costs 2 turns per node
+ 
+# =============================================
+# DISTRICT BETA (x: 6 -> 10)
+# Middle zone, high complexity with loops and dead ends
+# =============================================
+ 
+# Entry nodes from bridges
+hub: beta_entry_n 6 3 [color=cyan max_drones=3]
+hub: beta_entry_c 6 0 [color=cyan max_drones=3]
+hub: beta_entry_s 6 -3 [color=cyan max_drones=3]
+ 
+# Beta northern quarter
+hub: beta_n1 7 4 [zone=priority color=lime max_drones=3]
+hub: beta_n2 8 4 [zone=priority color=lime max_drones=3]
+hub: beta_n3 9 3 [color=blue max_drones=3]
+ 
+# Beta central quarter — has a BACKWARD LOOP: goes to x=5 then forward again
+hub: beta_c1 7 1 [color=blue max_drones=3]
+hub: beta_loop_w 5 1 [zone=restricted color=maroon max_drones=2]
+# ^^ jumps back to x=5 (behind bridge!) before rejoining
+hub: beta_loop_e 7 -1 [zone=restricted color=maroon max_drones=2]
+hub: beta_c2 8 0 [color=blue max_drones=3]
+hub: beta_c3 9 0 [color=blue max_drones=3]
+ 
+# Beta southern quarter
+hub: beta_s1 7 -3 [color=blue max_drones=3]
+hub: beta_s2 8 -4 [zone=priority color=lime max_drones=3]
+hub: beta_s3 9 -3 [color=blue max_drones=3]
+ 
+# Dead ends (traps for naive algorithms)
+hub: dead_beta_n 10 4 [color=red max_drones=1]
+hub: dead_beta_s 10 -4 [color=red max_drones=1]
+ 
+# Blocked walls in beta
+hub: wall_b1 8 2 [zone=blocked color=gray]
+hub: wall_b2 8 -2 [zone=blocked color=gray]
+hub: wall_b3 9 1 [zone=blocked color=gray]
+hub: wall_b4 9 -1 [zone=blocked color=gray]
+ 
+# Cross-district shortcuts (non-obvious lateral connections)
+hub: shortcut_n 8 3 [color=yellow max_drones=2]
+hub: shortcut_s 8 -3 [color=yellow max_drones=2]
+ 
+# =============================================
+# GAMMA BRIDGE (x: 9 -> 11) — second bottleneck
+# =============================================
+hub: gamma_bridge_n 10 3 [color=orange max_drones=2]
+hub: gamma_bridge_c 10 0 [color=orange max_drones=2]
+hub: gamma_bridge_s 10 -3 [color=orange max_drones=2]
+ 
+# High route: goes UP and BACKWARD to x=8 before crossing
+hub: high_route_w 8 6 [zone=restricted color=teal max_drones=3]
+hub: high_route_e 11 6 [zone=restricted color=teal max_drones=3]
+ 
+# =============================================
+# DISTRICT GAMMA (x: 11 -> 14)
+# Final district, convergence to goal
+# =============================================
+hub: gamma_n 11 3 [color=cyan max_drones=3]
+hub: gamma_c 11 0 [color=cyan max_drones=3]
+hub: gamma_s 11 -3 [color=cyan max_drones=3]
+ 
+# Final approach lanes — merge from 3 to 2 to goal
+hub: final_n 12 2 [zone=priority color=lime max_drones=4]
+hub: final_s 12 -2 [zone=priority color=lime max_drones=4]
+hub: final_merge_n 13 1 [color=magenta max_drones=3]
+hub: final_merge_s 13 -1 [color=magenta max_drones=3]
+ 
+end_hub: goal 14 0 [color=gold max_drones=55]
+ 
+# =============================================
+# CONNECTIONS
+# =============================================
+ 
+# --- Depot -> Alpha gates ---
+connection: depot-alpha_gate_n [max_link_capacity=4]
+connection: depot-alpha_gate_c [max_link_capacity=4]
+connection: depot-alpha_gate_s [max_link_capacity=4]
+ 
+# --- Alpha northern sub-district ---
+connection: alpha_gate_n-alpha_n1
+connection: alpha_n1-alpha_n2
+connection: alpha_n2-alpha_n3
+connection: alpha_n3-bridge_n [max_link_capacity=2]
+connection: alpha_n1-underpass_w
+ 
+# --- Alpha central sub-district (with backtrack) ---
+connection: alpha_gate_c-alpha_c1
+connection: alpha_c1-alpha_detour
+connection: alpha_detour-alpha_c2
+connection: alpha_c2-alpha_c3
+connection: alpha_c3-alpha_c4
+connection: alpha_c4-bridge_c [max_link_capacity=2]
+ 
+# --- Alpha southern sub-district ---
+connection: alpha_gate_s-alpha_s1
+connection: alpha_s1-alpha_s2
+connection: alpha_s2-alpha_s3
+connection: alpha_s3-bridge_s [max_link_capacity=2]
+ 
+# --- Alpha cross-connections ---
+connection: alpha_gate_n-alpha_c1
+connection: alpha_n2-alpha_c3
+connection: alpha_s2-alpha_c3
+ 
+# --- Underpass (backtrack path bypassing bridges) ---
+connection: underpass_w-underpass_e
+connection: underpass_e-beta_entry_n
+connection: underpass_e-beta_n1
+ 
+# --- Bridges -> Beta ---
+connection: bridge_n-beta_entry_n [max_link_capacity=2]
+connection: bridge_c-beta_entry_c [max_link_capacity=2]
+connection: bridge_s-beta_entry_s [max_link_capacity=2]
+ 
+# --- Beta northern quarter ---
+connection: beta_entry_n-beta_n1
+connection: beta_n1-beta_n2
+connection: beta_n2-shortcut_n
+connection: shortcut_n-beta_n3
+connection: beta_n3-gamma_bridge_n [max_link_capacity=2]
+# dead end trap
+connection: beta_n2-dead_beta_n
+ 
+# --- Beta central quarter (with backward loop) ---
+connection: beta_entry_c-beta_c1
+connection: beta_c1-beta_loop_w
+connection: beta_loop_w-beta_loop_e
+connection: beta_loop_e-beta_c2
+connection: beta_c2-beta_c3
+connection: beta_c3-gamma_bridge_c [max_link_capacity=2]
+ 
+# --- Beta southern quarter ---
+connection: beta_entry_s-beta_s1
+connection: beta_s1-beta_s2
+connection: beta_s2-shortcut_s
+connection: shortcut_s-beta_s3
+connection: beta_s3-gamma_bridge_s [max_link_capacity=2]
+# dead end trap
+connection: beta_s2-dead_beta_s
+ 
+# --- Beta cross-connections ---
+connection: beta_entry_n-beta_c1
+connection: beta_n3-beta_c3
+connection: beta_s3-beta_c3
+connection: shortcut_n-shortcut_s
+ 
+# --- High route (second backtrack bypass) ---
+connection: beta_n2-high_route_w
+connection: high_route_w-high_route_e
+connection: high_route_e-gamma_n
+ 
+# --- Gamma bridges -> District Gamma ---
+connection: gamma_bridge_n-gamma_n [max_link_capacity=2]
+connection: gamma_bridge_c-gamma_c [max_link_capacity=2]
+connection: gamma_bridge_s-gamma_s [max_link_capacity=2]
+ 
+# --- District Gamma internal ---
+connection: gamma_n-final_n
+connection: gamma_c-final_n
+connection: gamma_c-final_s
+connection: gamma_s-final_s
+ 
+# --- Final approach -> goal ---
+connection: final_n-final_merge_n
+connection: final_s-final_merge_s
+connection: final_merge_n-goal [max_link_capacity=3]
+connection: final_merge_s-goal [max_link_capacity=3]
+connection: final_n-final_merge_s
+connection: final_s-final_merge_n
+ 
+# --- Blocked wall connections (visual graph integrity — algorithm must avoid these) ---
+# wall_a1 (3,1): between alpha_n2(3,3), alpha_c3(3,0), alpha_gate_n(1,2), alpha_c1(2,0)
+connection: alpha_n2-wall_a1
+connection: alpha_c3-wall_a1
+connection: alpha_gate_n-wall_a1
+connection: alpha_c1-wall_a1
+ 
+# wall_a2 (3,-1): between alpha_c3(3,0), alpha_s2(3,-2), alpha_c2(2,-1), alpha_detour(1,-1)
+connection: alpha_c3-wall_a2
+connection: alpha_s2-wall_a2
+connection: alpha_c2-wall_a2
+connection: alpha_detour-wall_a2
+ 
+# wall_b1 (8,2): between shortcut_n(8,3), beta_c2(8,0), beta_c1(7,1), beta_n2(8,4)
+connection: shortcut_n-wall_b1
+connection: beta_c2-wall_b1
+connection: beta_c1-wall_b1
+connection: beta_n2-wall_b1
+ 
+# wall_b2 (8,-2): between shortcut_s(8,-3), beta_c2(8,0), beta_loop_e(7,-1), beta_s2(8,-4)
+connection: shortcut_s-wall_b2
+connection: beta_c2-wall_b2
+connection: beta_loop_e-wall_b2
+connection: beta_s2-wall_b2
+ 
+# wall_b3 (9,1): between beta_n3(9,3), beta_c3(9,0), wall_b1(8,2), gamma_bridge_n(10,3)
+connection: beta_n3-wall_b3
+connection: beta_c3-wall_b3
+connection: wall_b1-wall_b3
+connection: gamma_bridge_n-wall_b3
+ 
+# wall_b4 (9,-1): between beta_s3(9,-3), beta_c3(9,0), wall_b2(8,-2), gamma_bridge_s(10,-3)
+connection: beta_s3-wall_b4
+connection: beta_c3-wall_b4
+connection: wall_b2-wall_b4
+connection: gamma_bridge_s-wall_b4

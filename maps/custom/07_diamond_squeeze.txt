@@ -1,0 +1,66 @@
+# Custom Level 2: DIAMOND SQUEEZE
+# 10 drones, diamond topology with a central bottleneck.
+# Key challenges:
+#   - Entry funnel: only 3 drones can enter per turn (3 gates, cap 1 each)
+#   - Diamond center: two branches of different quality
+#       * upper branch: priority zone (preferred, but cap 2)
+#       * lower branch: restricted zone (costs 2 turns, cap 3 - more throughput)
+#   - Exit funnel: converges back to cap 2 before goal
+# A greedy algorithm that always picks priority will overflow the upper branch.
+# Optimal: split smartly between upper and lower.
+# Target: <= 14 turns
+#
+# Layout (schematic):
+#
+#          gate1 ──┐
+#   start──gate2 ──┤──[split]──[upper_p1->upper_p2]──┬──[merge]──goal
+#          gate3 ──┘           [lower_r1(restricted)] ┘
+#
+
+nb_drones: 10
+
+start_hub: start 0 0 [color=green max_drones=10]
+
+# Entry gates: 3 parallel, cap 1 each (total throughput = 3/turn)
+hub: gate1 1 1 [color=orange max_drones=1]
+hub: gate2 1 0 [color=orange max_drones=1]
+hub: gate3 1 -1 [color=orange max_drones=1]
+
+# Splitter node (collects from gates, feeds branches)
+hub: split 2 0 [color=yellow max_drones=3]
+
+# Upper branch: priority zones, capacity 2 each
+hub: upper_p1 3 1 [zone=priority color=cyan max_drones=2]
+hub: upper_p2 4 1 [zone=priority color=cyan max_drones=2]
+
+# Lower branch: restricted zone (2 turns to enter), but capacity 3
+hub: lower_r1 3 -1 [zone=restricted color=red max_drones=3]
+
+# Merge node before goal
+hub: merge 5 0 [color=yellow max_drones=4]
+
+end_hub: goal 6 0 [color=green max_drones=10]
+
+# Entry connections
+connection: start-gate1 [max_link_capacity=1]
+connection: start-gate2 [max_link_capacity=1]
+connection: start-gate3 [max_link_capacity=1]
+
+# Gates to splitter
+connection: gate1-split [max_link_capacity=1]
+connection: gate2-split [max_link_capacity=1]
+connection: gate3-split [max_link_capacity=1]
+
+# Split to branches
+connection: split-upper_p1 [max_link_capacity=2]
+connection: split-lower_r1 [max_link_capacity=3]
+
+# Upper branch internal
+connection: upper_p1-upper_p2 [max_link_capacity=2]
+
+# Branches to merge
+connection: upper_p2-merge [max_link_capacity=2]
+connection: lower_r1-merge [max_link_capacity=3]
+
+# Merge to goal
+connection: merge-goal [max_link_capacity=4]

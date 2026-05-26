@@ -188,9 +188,9 @@ class MultiPathDroneScheduler:
                 for d in self.drones
                 if not d.completed and d.current_hub == next_hub
             )
-            total_occupancy = current_occupancy + drones_moving_to_hub[
-                next_hub
-            ]
+            total_occupancy = (
+                current_occupancy + drones_moving_to_hub[next_hub]
+            )
             if total_occupancy >= next_hub_obj.max_drones:
                 continue  # Hub is full, can't move
 

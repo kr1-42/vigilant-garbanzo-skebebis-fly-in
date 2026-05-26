@@ -1,0 +1,99 @@
+# Custom Level 4: HIGHWAY HELL
+# 16 drones. A highway with on-ramps, shared segments, and timed merges.
+# This map is designed to break any algorithm that cannot reason about
+# temporal conflicts (two groups arriving at a merge point at the same turn).
+#
+# Key challenges:
+#   1. Three "origin clusters" each feed into the highway at different points.
+#      If all clusters launch simultaneously, they collide at the merge zones.
+#   2. Highway segments have cap 2 — fast, but must be shared.
+#   3. Priority bypass exists but is narrow (cap 1) and only saves 1 turn.
+#   4. Exit gauntlet: 3 sequential bottlenecks of cap 1 each. Only 1 drone
+#      per turn can exit — so the last 15 drones queue here.
+#      The algorithm must pipeline the highway fill to maximize exit throughput.
+#   5. Restricted shortcut: cuts 2 hops but costs 2 turns — tricky tradeoff.
+#
+# Structure:
+#
+#  [cluster_a: 6 drones] ──a1──a2──┐
+#  [cluster_b: 5 drones] ──b1──────┤──[hw1]──[hw2]──[hw3]──[ex1]──[ex2]──[ex3]──goal
+#  [cluster_c: 5 drones] ──c1──────┘              │
+#                    priority bypass: hw1──[bp]──hw3 (cap 1)
+#                    restricted shortcut: a2──[rs]──hw3 (cap 2, costs 2 turns)
+#
+# Target: <= 30 turns
+
+nb_drones: 16
+
+start_hub: start 0 0 [color=green max_drones=16]
+
+# ── Cluster A (top lane, 2 hops to highway) ──────────────────────────────────
+hub: a1 1 3 [color=steelblue max_drones=1]
+hub: a2 2 3 [color=steelblue max_drones=1]
+
+# ── Cluster B (middle lane, 1 hop to highway) ────────────────────────────────
+hub: b1 1 0 [color=royalblue max_drones=1]
+
+# ── Cluster C (bottom lane, 1 hop to highway, restricted) ────────────────────
+hub: c1 1 -3 [zone=restricted color=tomato max_drones=1]
+
+# ── Merge point A+B: feeds the highway ───────────────────────────────────────
+hub: merge_ab 3 2 [color=yellow max_drones=1]
+
+# ── Merge point for C: joins the highway at hw2 ──────────────────────────────
+hub: merge_c 3 -1 [color=yellow max_drones=1]
+
+# ── Main highway: cap 2 each, 3 segments ─────────────────────────────────────
+hub: hw1 4 1 [color=lime max_drones=1]
+hub: hw2 5 0 [color=lime max_drones=1]
+hub: hw3 6 0 [color=lime max_drones=20]
+
+# ── Priority bypass (hw1 -> bypass -> hw3, skips hw2, but cap 1) ─────────────
+hub: bypass 6 3 [zone=priority color=gold max_drones=1]
+
+# ── Restricted shortcut (a2 -> shortcut -> hw3, saves 1 hop, costs 2 turns) ──
+hub: shortcut 4 4 [zone=restricted color=darkorange max_drones=1]
+
+# ── Exit gauntlet: 3 bottlenecks cap 1 each (only 1 drone/turn exits) ────────
+hub: ex1 7 0 [color=crimson max_drones=20]
+hub: ex2 8 0 [color=crimson max_drones=20]
+hub: ex3 9 0 [color=crimson max_drones=20]
+
+end_hub: goal 10 0 [color=green max_drones=16]
+
+# ── Start to clusters ────────────────────────────────────────────────────────
+connection: start-a1 [max_link_capacity=1]
+connection: start-b1 [max_link_capacity=1]
+connection: start-c1 [max_link_capacity=1]
+
+# ── Cluster A internal ───────────────────────────────────────────────────────
+connection: a1-a2 [max_link_capacity=1]
+connection: a2-merge_ab [max_link_capacity=1]
+
+# ── Cluster B to merge ───────────────────────────────────────────────────────
+connection: b1-merge_ab [max_link_capacity=1]
+
+# ── Restricted shortcut from a2 (alternative to going through merge_ab) ──────
+connection: a2-shortcut [max_link_capacity=1]
+connection: shortcut-hw3 [max_link_capacity=1]
+
+# ── Cluster C to highway (restricted zone enters at hw2 via merge_c) ─────────
+connection: c1-merge_c [max_link_capacity=1]
+connection: merge_c-hw2 [max_link_capacity=1]
+
+# ── Merge AB to highway ──────────────────────────────────────────────────────
+connection: merge_ab-hw1 [max_link_capacity=1]
+
+# ── Main highway connections ─────────────────────────────────────────────────
+connection: hw1-hw2 [max_link_capacity=1]
+connection: hw2-hw3 [max_link_capacity=1]
+
+# ── Priority bypass (hw1 → bypass → hw3, skips hw2) ─────────────────────────
+connection: hw1-bypass [max_link_capacity=1]
+connection: bypass-hw3 [max_link_capacity=1]
+
+# ── Highway to exit gauntlet ─────────────────────────────────────────────────
+connection: hw3-ex1 [max_link_capacity=20]
+connection: ex1-ex2 [max_link_capacity=20]
+connection: ex2-ex3 [max_link_capacity=20]
+connection: ex3-goal [max_link_capacity=20]

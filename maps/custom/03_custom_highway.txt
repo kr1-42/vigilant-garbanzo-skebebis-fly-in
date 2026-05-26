@@ -1,0 +1,115 @@
+# CUSTOM MAP: THE HIGHWAY
+# 50 drones - parallel multi-lane routing with progressive bottlenecks
+# Design goal: stress-test load balancing across symmetric and asymmetric paths
+# Performance target: < 50 turns
+nb_drones: 50
+
+# === LAYER 0: Departure Hub ===
+start_hub: start 0 0 [color=green max_drones=50]
+
+# === LAYER 1: Entry Distribution (4 lanes, max 2 per gate) ===
+hub: gate_north 1 2 [color=cyan max_drones=2]
+hub: gate_mid_north 1 1 [color=cyan max_drones=2]
+hub: gate_mid_south 1 -1 [color=cyan max_drones=2]
+hub: gate_south 1 -2 [color=cyan max_drones=2]
+
+# === LAYER 2: Highway Lanes (high capacity, wide open) ===
+# North express lane (priority)
+hub: highway_n1 3 2 [zone=priority color=lime max_drones=4]
+hub: highway_n2 5 2 [zone=priority color=lime max_drones=4]
+hub: highway_n3 7 2 [zone=priority color=lime max_drones=4]
+
+# Upper mid lane (normal)
+hub: highway_m1 3 1 [color=blue max_drones=3]
+hub: highway_m2 5 1 [color=blue max_drones=3]
+hub: highway_m3 7 1 [color=blue max_drones=3]
+
+# Lower mid lane (normal)
+hub: highway_l1 3 -1 [color=blue max_drones=3]
+hub: highway_l2 5 -1 [color=blue max_drones=3]
+hub: highway_l3 7 -1 [color=blue max_drones=3]
+
+# South restricted lane (slow but extra capacity)
+hub: highway_s1 3 -2 [zone=restricted color=orange max_drones=4]
+hub: highway_s2 5 -2 [zone=restricted color=orange max_drones=4]
+hub: highway_s3 7 -2 [zone=restricted color=orange max_drones=4]
+
+# === LAYER 3: Mid-Route Interchange (cross-lane merging allowed) ===
+hub: interchange_top 6 2 [color=yellow max_drones=3]
+hub: interchange_mid 6 0 [color=yellow max_drones=3]
+hub: interchange_bot 6 -2 [color=yellow max_drones=3]
+
+# === LAYER 4: Convergence Funnels (bottleneck - 3 slots each) ===
+hub: funnel_north 9 1 [color=magenta max_drones=3]
+hub: funnel_center 9 0 [color=magenta max_drones=3]
+hub: funnel_south 9 -1 [color=magenta max_drones=3]
+
+# === LAYER 5: Final Merge + Arrival ===
+hub: merge 11 0 [color=white max_drones=4]
+
+end_hub: goal 13 0 [color=gold max_drones=50]
+
+# =====================
+# CONNECTIONS
+# =====================
+
+# Layer 0 -> Layer 1: start to gates
+connection: start-gate_north [max_link_capacity=4]
+connection: start-gate_mid_north [max_link_capacity=4]
+connection: start-gate_mid_south [max_link_capacity=4]
+connection: start-gate_south [max_link_capacity=4]
+
+# Layer 1 -> Layer 2: gates feed into lanes
+connection: gate_north-highway_n1
+connection: gate_mid_north-highway_m1
+connection: gate_mid_south-highway_l1
+connection: gate_south-highway_s1
+
+# Cross-feeding from gates to adjacent lanes (overflow routing)
+connection: gate_north-highway_m1
+connection: gate_mid_north-highway_n1
+connection: gate_mid_south-highway_m1
+connection: gate_south-highway_l1
+
+# Lane segments - north express
+connection: highway_n1-highway_n2
+connection: highway_n2-highway_n3
+
+# Lane segments - upper mid
+connection: highway_m1-highway_m2
+connection: highway_m2-highway_m3
+
+# Lane segments - lower mid
+connection: highway_l1-highway_l2
+connection: highway_l2-highway_l3
+
+# Lane segments - south restricted
+connection: highway_s1-highway_s2
+connection: highway_s2-highway_s3
+
+# Interchange connections (mid-route cross-lane merging)
+connection: highway_n2-interchange_top
+connection: highway_m2-interchange_mid
+connection: highway_l2-interchange_mid
+connection: highway_s2-interchange_bot
+
+connection: interchange_top-highway_n3
+connection: interchange_mid-highway_m3
+connection: interchange_mid-highway_l3
+connection: interchange_bot-highway_s3
+
+# Layer 2 -> Layer 4: lanes feed funnels
+connection: highway_n3-funnel_north [max_link_capacity=2]
+connection: highway_m3-funnel_north [max_link_capacity=2]
+connection: highway_m3-funnel_center [max_link_capacity=2]
+connection: highway_l3-funnel_center [max_link_capacity=2]
+connection: highway_l3-funnel_south [max_link_capacity=2]
+connection: highway_s3-funnel_south [max_link_capacity=2]
+
+# Layer 4 -> Layer 5
+connection: funnel_north-merge [max_link_capacity=2]
+connection: funnel_center-merge [max_link_capacity=2]
+connection: funnel_south-merge [max_link_capacity=2]
+
+# Layer 5 -> Goal
+connection: merge-goal [max_link_capacity=4]

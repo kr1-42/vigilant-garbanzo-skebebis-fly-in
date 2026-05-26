@@ -64,8 +64,7 @@ class DroneMovementTracker:
         # Check if we already recorded this drone this turn
         # (avoid duplicates from record_movement calls)
         already_recorded = any(
-            d[0] == drone_id
-            for d in self.movement_history[self.current_turn]
+            d[0] == drone_id for d in self.movement_history[self.current_turn]
         )
         if not already_recorded:
             self.movement_history[self.current_turn].append(
