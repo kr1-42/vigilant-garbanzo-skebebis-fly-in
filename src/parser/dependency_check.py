@@ -1,7 +1,7 @@
 import importlib
 
 
-def check_dependencies():
+def check_dependencies() -> bool:
     dependencies = ["numpy", "matplotlib", "pandas", "pygame"]
 
     try:

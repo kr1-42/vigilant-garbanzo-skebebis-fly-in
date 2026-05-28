@@ -1,6 +1,6 @@
 """Multi-path drone scheduler for managing drones across multiple paths."""
-
-from ..cls_data import Data
+from typing import cast
+from ..cls_data import Data, Connection
 from .drone import Drone
 from .pathfinding import get_movement_cost, find_connection
 
@@ -197,7 +197,10 @@ class MultiPathDroneScheduler:
             # Check connection capacity
             conn_key = get_connection_key(current_hub, next_hub)
             if conn_key in connection_usage_after:
-                conn = find_connection(current_hub, next_hub, self.data)
+                conn = cast(
+                    Connection,
+                    find_connection(current_hub, next_hub, self.data),
+                )
                 if (
                     conn
                     and connection_usage_after[conn_key]

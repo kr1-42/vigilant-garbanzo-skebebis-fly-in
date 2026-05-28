@@ -1,7 +1,7 @@
 """Pathfinding algorithms for drone routing through the network."""
 
 import heapq
-from ..cls_data import Data
+from ..cls_data import Data, Connection
 from .constants import ZONE_COSTS
 
 
@@ -17,7 +17,7 @@ def is_hub_accessible(hub_name: str, data: Data) -> bool:
     return hub.zone != "blocked"
 
 
-def find_connection(hub_a: str, hub_b: str, data: Data):
+def find_connection(hub_a: str, hub_b: str, data: Data) -> Connection | None:
     """Find the connection between two hubs."""
     for conn in data.connections:
         if conn.contains(hub_a, hub_b):
@@ -115,7 +115,8 @@ def find_multiple_paths(
 ) -> list[tuple[list[str], int]]:
     """
     Find multiple independent paths from start to end hub.
-    Each path respects capacity constraints and zone accessibility.
+    Paths can share edges (e.g., at fork points) but are encouraged to diverge
+    after shared segments.
 
     Args:
         data: The drone network data
@@ -125,20 +126,18 @@ def find_multiple_paths(
         List of (path, cost) tuples, sorted by cost (cheapest first)
     """
     paths = []
-    excluded_edges = set()
+    excluded_nodes = set()  # Nodes to avoid in subsequent paths
 
     for _ in range(max_paths):
-        # Build adjacency list, excluding edges used in previous paths
+        # Build adjacency list - allow edge reuse but penalize visited nodes
         graph: dict[str, list[str]] = {hub_name: [] for hub_name in data.hubs}
 
         for connection in data.connections:
             hub_a, hub_b = connection.hub_a, connection.hub_b
-            edge = tuple(sorted([hub_a, hub_b]))
 
-            # Only add edges that are accessible and not fully excluded
+            # Only add edges that are accessible
             if (
-                edge not in excluded_edges
-                and is_hub_accessible(hub_a, data)
+                is_hub_accessible(hub_a, data)
                 and is_hub_accessible(hub_b, data)
             ):
                 graph[hub_a].append(hub_b)
@@ -153,7 +152,8 @@ def find_multiple_paths(
         ):
             break
 
-        # Dijkstra's algorithm to find one path
+        # Dijkstra's algorithm with node penalty for diversity
+        # (cost, hub_name, path)
         pq = [(0, start, [start])]
         visited = set()
         distances = {hub: float("inf") for hub in data.hubs}
@@ -175,7 +175,16 @@ def find_multiple_paths(
             for neighbor in graph[current_hub]:
                 if neighbor not in visited:
                     move_cost = get_movement_cost(neighbor, data)
-                    new_cost = cost + move_cost
+                    # Penalize nodes that were in previous paths
+                    # (except start/end) to encourage diverse routes
+                    node_penalty = 0
+                    if (
+                        neighbor in excluded_nodes
+                        and neighbor not in (start, end)
+                    ):
+                        node_penalty = 5  # Encourage alternate routes
+
+                    new_cost = cost + move_cost + node_penalty
 
                     if new_cost < distances[neighbor]:
                         distances[neighbor] = new_cost
@@ -185,11 +194,11 @@ def find_multiple_paths(
 
         if path_found:
             paths.append(path_found)
-            # Exclude edges used in this path for next iteration
+            # Exclude intermediate nodes (not start/end) for next iteration
+            # This encourages diversity while allowing edge reuse at forks
             path, cost = path_found
-            for i in range(len(path) - 1):
-                edge = tuple(sorted([path[i], path[i + 1]]))
-                excluded_edges.add(edge)
+            for hub in path[1:-1]:  # Skip start and end hubs
+                excluded_nodes.add(hub)
         else:
             break
 

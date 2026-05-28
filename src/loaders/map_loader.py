@@ -23,7 +23,7 @@ def get_available_maps() -> dict[str, list[tuple[str, str]]]:
     and values are lists of (map_name, file_path) tuples.
     """
     maps_folder = Path("maps")
-    available_maps = {}
+    available_maps: dict[str, list[tuple[str, str]]] = {}
 
     if not maps_folder.exists():
         return available_maps

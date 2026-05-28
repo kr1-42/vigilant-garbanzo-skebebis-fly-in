@@ -46,31 +46,52 @@ def estimate_multiple_paths_turns(
 ) -> int:
     """
     Estimate total turns needed for multiple disjoint paths.
-    Assumes drones are distributed across paths and move in parallel.
+    Accounts for shared bottleneck hubs between paths.
 
     Args:
         paths: List of (path, cost) tuples
         nb_drones: Number of drones to send
 
     Returns:
-        Estimated total turns needed (max path cost among distributed drones)
+        Estimated total turns needed, accounting for bottlenecks
     """
     if not paths:
         return 9999
 
-    # Sort paths by cost (most expensive first)
-    sorted_paths = sorted(paths, key=lambda p: p[1], reverse=True)
+    if len(paths) == 0:
+        return 9999
 
-    # Distribute drones round-robin across paths
-    drones_per_path = [0] * len(sorted_paths)
-    for i in range(nb_drones):
-        drones_per_path[i % len(sorted_paths)] += 1
+    # Find shared (convergence) hubs between paths
+    all_hubs_per_path = [set(path) for path, _ in paths]
 
-    # Total turns is the cost of the most expensive path
-    # (since drones move in parallel on different paths)
-    max_turns = 0
-    for path_idx, (path, cost) in enumerate(sorted_paths):
-        # Simple estimate: just use path cost
-        max_turns = max(max_turns, cost)
+    # Check if paths share hubs (excluding start and end)
+    shared_hubs = None
+    if len(all_hubs_per_path) > 1:
+        shared_hubs = set.intersection(*all_hubs_per_path)
+        if shared_hubs:
+            # Remove start and end from shared analysis
+            shared_hubs.discard(paths[0][0][0])  # start
+            shared_hubs.discard(paths[0][0][-1])  # end
 
-    return max_turns
+    # If paths share intermediate hubs, they have a bottleneck
+    if shared_hubs:
+        # Paths are NOT truly independent
+        # Calculate with bottleneck factor
+        max_path_cost = max(cost for _, cost in paths)
+
+        # Number of shared paths through convergence point
+        num_paths_sharing = len(paths)
+
+        # Estimate queuing: if paths share hubs, drones must queue
+        # Each wave of drones = (nb_drones / num_paths) per path
+        drones_per_path = nb_drones / num_paths_sharing
+
+        # Queuing overhead: extra turns from drones exceeding capacity
+        queuing_overhead = max(0, (drones_per_path - 1) * num_paths_sharing)
+
+        return max_path_cost + int(queuing_overhead)
+    else:
+        # Paths are truly independent
+        # Total turns is the most expensive path (parallelism benefit)
+        max_turns = max(cost for _, cost in paths)
+        return max_turns

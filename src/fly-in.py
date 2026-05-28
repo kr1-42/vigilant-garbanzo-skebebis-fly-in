@@ -26,7 +26,9 @@ def fly_in() -> int:
     except ValueError as e:
         print(f"Configuration Error: {e}", file=sys.stderr)
         return 1
-
+    except KeyboardInterrupt:
+        print("\nProgram interrupted by user")
+        return -1
     try:
         visualize(data)
     except KeyboardInterrupt:

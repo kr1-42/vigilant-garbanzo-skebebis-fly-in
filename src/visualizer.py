@@ -1,5 +1,7 @@
 """Main visualization module."""
 
+import sys
+
 import pygame
 from typing import cast
 from .cls_data import Data
@@ -78,7 +80,12 @@ def visualize(data: Data) -> None:
         ValueError: If the configuration is invalid or no path can be found
         FileNotFoundError: If sprite files cannot be loaded
     """
-    pygame.init()
+    try:
+        pygame.init()
+
+    except Exception as e:
+        print(f"Error initializing pygame: {e}", file=sys.stderr)
+        return
 
     try:
         # Get bounds

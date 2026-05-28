@@ -14,9 +14,13 @@ def fly_in() -> int:
         2 - File not found
         3 - Runtime error during visualization
         4 - Dependency error
+      130 - Interrupted by user
     """
     try:
         data: Data = main_parser()
+    except KeyboardInterrupt:
+        print("\nProgram interrupted by user")
+        return 130
     except FileNotFoundError as e:
         print(f"Error: {e}", file=sys.stderr)
         return 2
@@ -31,7 +35,7 @@ def fly_in() -> int:
         visualize(data)
     except KeyboardInterrupt:
         print("\nProgram interrupted by user")
-        return 0
+        return 130
     except Exception as e:
         print(f"Runtime Error: {e}", file=sys.stderr)
         return 3
