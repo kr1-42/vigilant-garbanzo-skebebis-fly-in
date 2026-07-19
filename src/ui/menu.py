@@ -5,6 +5,16 @@ from pygame.surface import Surface
 from loaders.map_loader import get_available_maps
 
 
+def draw_map_menu(
+    robot,
+    screen: pygame.Surface,
+    window_width: int,
+    window_height: int,
+    bob: str,
+) -> None:
+    pass
+
+
 def display_map_menu(
     screen: pygame.Surface, window_width: int, window_height: int
 ) -> str | None:

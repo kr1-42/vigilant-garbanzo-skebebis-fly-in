@@ -151,24 +151,14 @@ class DroneScheduler:
         # Sort candidates by drone ID for FIFO priority
         candidates.sort(key=lambda d: d.drone_id)
 
-        # Track hub occupancy AFTER moves to check capacity
-        # This counts: drones staying + drones entering (tracked as we go)
+        # Track hub occupancy AFTER moves to check capacity.
+        # Start from actual current occupancy and only adjust a hub's count
+        # when a drone is *approved* to move, not merely when it's a
+        # candidate - a candidate can still be blocked (e.g. by the
+        # restricted-outflow-per-turn rule below) and remain at its hub.
         hub_after_moves = {}
         for hub_name in self.data.hubs:
-            # Count only drones staying at this hub (not moving away)
-            hub_after_moves[hub_name] = sum(
-                1
-                for d in self.drones
-                if d.current_hub == hub_name
-                and not d.completed
-                and d not in candidates
-            )
-
-        # Track how many drones are entering each hub
-
-        drones_entering_hub = {}
-        for hub_name in self.data.hubs:
-            drones_entering_hub[hub_name] = 0
+            hub_after_moves[hub_name] = self.get_hub_occupancy(hub_name)
 
         # Track connection usage AFTER moves
         def get_connection_key(hub_a: str, hub_b: str) -> tuple[str, str]:
@@ -198,12 +188,9 @@ class DroneScheduler:
             if movement_cost > 1 and drones_moved_from_hub[current_hub] > 0:
                 continue  # Only 1 drone exits restricted hub per turn
 
-            # Check hub capacity: staying drones + already entering drones
-            # + this drone cannot exceed max_drones
-            current_occupancy = (
-                hub_after_moves[next_hub] + drones_entering_hub[next_hub]
-            )
-            if current_occupancy >= next_hub_obj.max_drones:
+            # Check hub capacity: current occupancy (after any moves already
+            # approved this turn) cannot exceed max_drones
+            if hub_after_moves[next_hub] >= next_hub_obj.max_drones:
                 continue  # Hub is full, can't move
 
             # Check connection capacity
@@ -222,7 +209,8 @@ class DroneScheduler:
 
             # This drone can move!
             drones_to_move.append(drone)
-            drones_entering_hub[next_hub] += 1
+            hub_after_moves[next_hub] += 1
+            hub_after_moves[current_hub] -= 1
             drones_moved_from_hub[current_hub] += 1
             if conn_key in connection_usage_after:
                 connection_usage_after[conn_key] += 1

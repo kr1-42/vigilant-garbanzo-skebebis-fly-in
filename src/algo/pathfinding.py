@@ -136,9 +136,8 @@ def find_multiple_paths(
             hub_a, hub_b = connection.hub_a, connection.hub_b
 
             # Only add edges that are accessible
-            if (
-                is_hub_accessible(hub_a, data)
-                and is_hub_accessible(hub_b, data)
+            if is_hub_accessible(hub_a, data) and is_hub_accessible(
+                hub_b, data
             ):
                 graph[hub_a].append(hub_b)
                 graph[hub_b].append(hub_a)
@@ -152,16 +151,21 @@ def find_multiple_paths(
         ):
             break
 
-        # Dijkstra's algorithm with node penalty for diversity
-        # (cost, hub_name, path)
-        pq = [(0, start, [start])]
+        # Dijkstra's algorithm with node penalty for diversity.
+        # The penalty only steers the search toward alternate routes - it
+        # must not leak into the reported cost, or unavoidable shared hubs
+        # (e.g. a single junction every route must pass through) make later
+        # paths look artificially expensive even though their real travel
+        # cost hasn't changed.
+        # (priority_cost, real_cost, hub_name, path)
+        pq = [(0, 0, start, [start])]
         visited = set()
         distances = {hub: float("inf") for hub in data.hubs}
         distances[start] = 0
 
         path_found = None
         while pq:
-            cost, current_hub, path = heapq.heappop(pq)
+            priority_cost, real_cost, current_hub, path = heapq.heappop(pq)
 
             if current_hub in visited:
                 continue
@@ -169,7 +173,7 @@ def find_multiple_paths(
             visited.add(current_hub)
 
             if current_hub == end:
-                path_found = (path, cost)
+                path_found = (path, real_cost)
                 break
 
             for neighbor in graph[current_hub]:
@@ -178,25 +182,34 @@ def find_multiple_paths(
                     # Penalize nodes that were in previous paths
                     # (except start/end) to encourage diverse routes
                     node_penalty = 0
-                    if (
-                        neighbor in excluded_nodes
-                        and neighbor not in (start, end)
+                    if neighbor in excluded_nodes and neighbor not in (
+                        start,
+                        end,
                     ):
                         node_penalty = 5  # Encourage alternate routes
 
-                    new_cost = cost + move_cost + node_penalty
+                    new_priority_cost = (
+                        priority_cost + move_cost + node_penalty
+                    )
+                    new_real_cost = real_cost + move_cost
 
-                    if new_cost < distances[neighbor]:
-                        distances[neighbor] = new_cost
+                    if new_priority_cost < distances[neighbor]:
+                        distances[neighbor] = new_priority_cost
                         heapq.heappush(
-                            pq, (new_cost, neighbor, path + [neighbor])
+                            pq,
+                            (
+                                new_priority_cost,
+                                new_real_cost,
+                                neighbor,
+                                path + [neighbor],
+                            ),
                         )
 
         if path_found:
             paths.append(path_found)
             # Exclude intermediate nodes (not start/end) for next iteration
             # This encourages diversity while allowing edge reuse at forks
-            path, cost = path_found
+            path, _ = path_found
             for hub in path[1:-1]:  # Skip start and end hubs
                 excluded_nodes.add(hub)
         else:

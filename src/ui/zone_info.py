@@ -2,6 +2,8 @@
 
 import pygame
 from typing import Optional
+
+from src.algo.multi_path_scheduler import MultiPathDroneScheduler
 from ..cls_data import Data, Hub
 
 
@@ -56,7 +58,7 @@ class ZoneInfoPopup:
         screen: pygame.Surface,
         mouse_pos: tuple[int, int],
         hub: Optional[Hub],
-        scheduler=None,
+        scheduler: Optional[MultiPathDroneScheduler] = None,
     ) -> None:
         """Draw zone information popup at mouse position."""
         if not hub:

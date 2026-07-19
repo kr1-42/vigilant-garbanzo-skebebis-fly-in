@@ -76,6 +76,7 @@ def optimize_path_strategy(
         # Only multiple paths exist
         use_multiple = True
         best_paths = [p[0] for p in multiple_paths]
+
         print("Only multiple paths found (single path not feasible)")
 
     strategy = "multiple" if use_multiple else "single"

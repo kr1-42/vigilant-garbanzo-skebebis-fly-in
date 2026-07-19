@@ -83,7 +83,7 @@ class SimulationWithTracking:
         return self.formatter
 
     @property
-    def drones(self):
+    def drones(self) -> list:
         """Get drones from scheduler."""
         return self.scheduler.drones
 
@@ -198,7 +198,7 @@ class SimulationWithMultiPath:
         return self.formatter
 
     @property
-    def drones(self):
+    def drones(self) -> list:
         """Get drones from scheduler."""
         return self.scheduler.drones
 

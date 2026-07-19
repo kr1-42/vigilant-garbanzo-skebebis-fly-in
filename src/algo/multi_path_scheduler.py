@@ -1,4 +1,5 @@
 """Multi-path drone scheduler for managing drones across multiple paths."""
+
 from typing import cast
 from ..cls_data import Data, Connection
 from .drone import Drone
