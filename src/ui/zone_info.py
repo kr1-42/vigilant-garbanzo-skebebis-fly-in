@@ -1,8 +1,9 @@
 """Zone information popup display for hover interactions."""
 
 import pygame
-from typing import Optional
+from typing import Any, Optional
 
+from src.algo.scheduler import DroneScheduler
 from src.algo.multi_path_scheduler import MultiPathDroneScheduler
 from ..cls_data import Data, Hub
 
@@ -22,7 +23,7 @@ class ZoneInfoPopup:
         self.small_font = pygame.font.Font(None, 12)
         self.title_font = pygame.font.Font(None, 14)
 
-    def get_zone_info(self, hub: Hub) -> dict:
+    def get_zone_info(self, hub: Hub) -> dict[str, Any]:
         """Get detailed information about a zone/hub."""
         # Get connected hubs and their capacities
         connections_info = []
@@ -58,7 +59,9 @@ class ZoneInfoPopup:
         screen: pygame.Surface,
         mouse_pos: tuple[int, int],
         hub: Optional[Hub],
-        scheduler: Optional[MultiPathDroneScheduler] = None,
+        scheduler: Optional[
+            DroneScheduler | MultiPathDroneScheduler
+        ] = None,
     ) -> None:
         """Draw zone information popup at mouse position."""
         if not hub:
@@ -197,7 +200,7 @@ class HoverDetector:
     """Detects which hub the mouse is hovering over."""
 
     def __init__(self, hub_radius: int = 10):
-        self.hub_positions = {}  # {hub_name: (screen_x, screen_y)}
+        self.hub_positions: dict[str, tuple[int, int]] = {}
         self.hub_radius = hub_radius
 
     def update_hub_position(

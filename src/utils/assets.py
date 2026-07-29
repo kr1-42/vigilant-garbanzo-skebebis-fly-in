@@ -1,12 +1,14 @@
 """Asset loading utilities for GIFs and sprites."""
 
+from typing import cast
+
 import pygame
 from PIL import Image
 
 
 def load_gif_frames(
     gif_path: str, max_width: int = 20, max_height: int = 20
-) -> tuple[list, int] | None:
+) -> tuple[list[pygame.Surface], int] | None:
     """Load all frames from a GIF file and calculate total duration.
 
     Args:
@@ -19,7 +21,7 @@ def load_gif_frames(
     """
     try:
         gif = Image.open(gif_path)
-        frames = []
+        frames: list[pygame.Surface] = []
         total_duration = 0
         frame_index = 0
 
@@ -39,8 +41,11 @@ def load_gif_frames(
             frame.thumbnail((max_width, max_height), Image.Resampling.LANCZOS)
 
             # Convert PIL image to pygame surface
-            pygame_surface = pygame.image.fromstring(
-                frame.tobytes(), frame.size, "RGBA"
+            pygame_surface = cast(
+                pygame.Surface,
+                pygame.image.frombuffer(
+                    frame.tobytes(), frame.size, "RGBA"
+                ),
             )
             frames.append(pygame_surface)
             frame_index += 1

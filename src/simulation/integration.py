@@ -1,6 +1,6 @@
 """Integration layer for drone movement tracking with scheduler."""
 
-from ..algo import DroneScheduler, MultiPathDroneScheduler
+from ..algo import Drone, DroneScheduler, MultiPathDroneScheduler
 from ..cls_data import Data
 from .movement_tracker import DroneMovementTracker
 from .output_formatter import SimulationOutputFormatter
@@ -83,7 +83,7 @@ class SimulationWithTracking:
         return self.formatter
 
     @property
-    def drones(self) -> list:
+    def drones(self) -> list[Drone]:
         """Get drones from scheduler."""
         return self.scheduler.drones
 
@@ -198,7 +198,7 @@ class SimulationWithMultiPath:
         return self.formatter
 
     @property
-    def drones(self) -> list:
+    def drones(self) -> list[Drone]:
         """Get drones from scheduler."""
         return self.scheduler.drones
 

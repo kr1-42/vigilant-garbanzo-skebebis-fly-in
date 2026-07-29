@@ -9,6 +9,7 @@ from .algo import (
     check_path_feasibility,
     MultiPathDroneScheduler,
     optimize_path_strategy,
+    DroneScheduler,
 )
 from .simulation.integration import (
     SimulationWithTracking,
@@ -45,7 +46,9 @@ HUB_GIF_SIZE = (40, 40)
 DEFAULT_GIF_DURATION = 500
 
 
-def load_hub_sprite(sprite_index: int) -> tuple[list | None, int, str]:
+def load_hub_sprite(
+    sprite_index: int,
+) -> tuple[list[pygame.Surface] | None, int, str]:
     """Load hub sprite by index from AVAILABLE_HUB_SPRITES.
 
     Args:
@@ -128,7 +131,10 @@ def visualize(data: Data) -> None:
 
         path = None
         paths: list[list[str]] = []
-        scheduler = None
+        scheduler: DroneScheduler | MultiPathDroneScheduler | None = None
+        tracking: (
+            SimulationWithTracking | SimulationWithMultiPath | None
+        ) = None
         path_feasible = False
 
         # Use optimized strategy to choose between single and multiple paths
@@ -180,9 +186,9 @@ def visualize(data: Data) -> None:
         available_maps = get_available_maps()
 
         # Flatten maps for selection
-        menu_items = []
+        menu_items: list[tuple[str, tuple[str, str]]] = []
         for category in sorted(available_maps.keys()):
-            menu_items.append(("header", category))
+            menu_items.append(("mypy", ("header", category)))
             for map_name, map_path in available_maps[category]:
                 menu_items.append(("map", (map_name, map_path)))
 
@@ -282,7 +288,7 @@ def visualize(data: Data) -> None:
             if simulation_complete:
                 # Draw integrated end screen with metrics and map selection
                 draw_end_screen_with_menu(
-                    screen,
+                    cast(pygame.Surface, screen),
                     tracking.scheduler,
                     available_maps,
                     selected_menu_index,
@@ -294,7 +300,7 @@ def visualize(data: Data) -> None:
 
                 # Draw all elements
                 draw_connections(
-                    screen,
+                    cast(pygame.Surface, screen),
                     data,
                     path,
                     min_x,
@@ -305,7 +311,7 @@ def visualize(data: Data) -> None:
                     WINDOW_HEIGHT,
                 )
                 draw_hubs(
-                    screen,
+                    cast(pygame.Surface, screen),
                     data,
                     hub_gif_frames,
                     hub_gif_duration,
@@ -320,7 +326,7 @@ def visualize(data: Data) -> None:
                     hover_detector,
                 )
                 draw_drones(
-                    screen,
+                    cast(pygame.Surface, screen),
                     data,
                     tracking.scheduler if tracking else None,
                     path,
@@ -335,7 +341,7 @@ def visualize(data: Data) -> None:
                     WINDOW_HEIGHT,
                 )
                 draw_simulation_info(
-                    screen,
+                    cast(pygame.Surface, screen),
                     tracking.scheduler if tracking else None,
                     speed_multiplier,
                     simulation_complete,
@@ -347,7 +353,7 @@ def visualize(data: Data) -> None:
                 hovered_hub = hover_detector.get_hovered_hub(mouse_pos, data)
                 if hovered_hub:
                     zone_info_popup.draw_popup(
-                        screen,
+                        cast(pygame.Surface, screen),
                         mouse_pos,
                         hovered_hub,
                         tracking.scheduler if tracking else None,

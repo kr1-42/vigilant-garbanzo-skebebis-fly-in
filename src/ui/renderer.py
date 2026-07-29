@@ -1,16 +1,21 @@
 """Rendering and drawing functions for the visualization."""
 
+from typing import Any
+
 import pygame
 import math
+from ..algo.scheduler import DroneScheduler
+from ..algo.multi_path_scheduler import MultiPathDroneScheduler
 from ..cls_data import Data
 from ..utils.geometry import scale_to_screen
 from ..utils.colors import parse_color
+from .zone_info import HoverDetector
 
 HUB_RADIUS = 10
 
 
 def draw_connections(
-    screen,
+    screen: pygame.Surface,
     data: Data,
     path: list[str] | None,
     min_x: float,
@@ -68,9 +73,9 @@ def draw_connections(
 
 
 def draw_hubs(
-    screen,
+    screen: pygame.Surface,
     data: Data,
-    hub_gif_frames: list | None,
+    hub_gif_frames: list[pygame.Surface] | None,
     hub_gif_duration: int,
     turn_elapsed: int,
     min_x: float,
@@ -79,8 +84,8 @@ def draw_hubs(
     max_y: float,
     window_width: int,
     window_height: int,
-    scheduler=None,
-    hover_detector=None,
+    scheduler: DroneScheduler | MultiPathDroneScheduler | None = None,
+    hover_detector: HoverDetector | None = None,
 ) -> None:
     """Draw hubs and their labels. Returns hover detector updated with hub
     positions.
@@ -150,11 +155,11 @@ def draw_hubs(
 
 
 def draw_drones(
-    screen,
+    screen: pygame.Surface,
     data: Data,
-    scheduler,
+    scheduler: DroneScheduler | MultiPathDroneScheduler | None,
     path: list[str] | None,
-    gif_frames: list | None,
+    gif_frames: list[pygame.Surface] | None,
     turn_elapsed: int,
     turn_duration_ms: int,
     min_x: float,
@@ -226,8 +231,8 @@ def draw_drones(
 
 
 def draw_simulation_info(
-    screen,
-    scheduler,
+    screen: pygame.Surface,
+    scheduler: DroneScheduler | MultiPathDroneScheduler | None,
     speed_multiplier: float = 1.0,
     is_complete: bool = False,
     hub_sprite_name: str | None = None,
@@ -410,7 +415,10 @@ def draw_simulation_info(
 
 
 def draw_end_screen_with_menu(
-    screen, scheduler, available_maps: dict, selected_index: int
+    screen: pygame.Surface,
+    scheduler: DroneScheduler | MultiPathDroneScheduler | None,
+    available_maps: dict[str, list[tuple[str, str]]],
+    selected_index: int,
 ) -> int:
     """Draw combined end screen with statistics and map selection menu.
 
@@ -525,7 +533,7 @@ def draw_end_screen_with_menu(
     y_offset += 45
 
     # Flatten maps into menu items
-    menu_items = []
+    menu_items: list[tuple[str, Any]] = []
     for category in sorted(available_maps.keys()):
         menu_items.append(("header", category))
         for map_name, map_path in available_maps[category]:

@@ -1,5 +1,5 @@
 NAME = src/fly-in.py
-FILE = .base.txt
+FILE = maps/easy/01_linear_path.txt
 PYTHON := ./venv/bin/python3
 
 MAP_DIR = maps/files

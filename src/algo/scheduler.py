@@ -1,6 +1,6 @@
 """Drone scheduler implementations for managing drone movement."""
 
-from typing import cast
+from typing import Any, cast
 
 from ..cls_data import Data, Connection
 from .drone import Drone
@@ -314,7 +314,7 @@ class DroneScheduler:
                 f"{start_hub_occupancy} > {start_hub_capacity}"
             )
 
-    def run_simulation(self, max_turns: int = 1000) -> dict:
+    def run_simulation(self, max_turns: int = 1000) -> dict[str, Any]:
         """
         Run the full simulation until all drones reach the end or max_turns.
 

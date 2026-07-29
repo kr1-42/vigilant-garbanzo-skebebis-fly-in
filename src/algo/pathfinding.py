@@ -1,6 +1,7 @@
 """Pathfinding algorithms for drone routing through the network."""
 
 import heapq
+from typing import Any
 from ..cls_data import Data, Connection
 from .constants import ZONE_COSTS
 
@@ -220,7 +221,7 @@ def find_multiple_paths(
 
 def check_path_feasibility(
     path: list[str], data: Data, nb_drones: int = 0
-) -> dict:
+) -> dict[str, Any]:
     """
     Check the feasibility of a given path considering capacity constraints.
 

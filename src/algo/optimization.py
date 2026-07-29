@@ -38,7 +38,11 @@ def optimize_path_strategy(
 
     # Compare strategies
     use_multiple = False
-    best_paths = single_path if single_path else []
+    best_paths: list[list[str]] | list[str]
+    if single_path:
+        best_paths = single_path
+    else:
+        best_paths = []
 
     if multiple_paths and single_path:
         # Both strategies exist - compare total turns
@@ -49,33 +53,15 @@ def optimize_path_strategy(
             multiple_paths, data.nb_drones
         )
 
-        print("\nPath optimization:")
-        print(
-            f"  Single path: {' -> '.join(single_path)} "
-            f"(estimated {single_turns} total turns)"
-        )
-        for i, (p, cost) in enumerate(multiple_paths):
-            print(f"  Multiple path {i + 1}: {' -> '.join(p)} (cost: {cost})")
-        print(f"  Single strategy total: {single_turns} turns")
-        print(f"  Multiple strategy total: {multiple_turns} turns")
-
         if multiple_turns < single_turns:
-            print(
-                f"  → Using multiple paths "
-                f"(saves {single_turns - multiple_turns} turns)"
-            )
             use_multiple = True
             best_paths = [p[0] for p in multiple_paths]
         else:
-            print(
-                f"  → Using single path "
-                f"(saves {multiple_turns - single_turns} turns)"
-            )
             use_multiple = False
     elif multiple_paths and not single_path:
         # Only multiple paths exist
         use_multiple = True
-        best_paths = [p[0] for p in multiple_paths]
+        best_paths = [path for path, _ in multiple_paths]
 
         print("Only multiple paths found (single path not feasible)")
 
