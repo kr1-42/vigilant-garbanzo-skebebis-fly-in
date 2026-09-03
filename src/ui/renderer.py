@@ -20,8 +20,11 @@ def _shade_color(
     color: tuple[int, int, int], amount: float
 ) -> tuple[int, int, int]:
     """Adjust an RGB color by a factor while keeping channels in range."""
-    return tuple(
-        max(0, min(255, int(channel * amount))) for channel in color
+    red, green, blue = color
+    return (
+        max(0, min(255, int(red * amount))),
+        max(0, min(255, int(green * amount))),
+        max(0, min(255, int(blue * amount))),
     )
 
 
