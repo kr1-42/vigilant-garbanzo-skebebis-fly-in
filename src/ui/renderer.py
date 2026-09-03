@@ -12,6 +12,61 @@ from ..utils.colors import parse_color
 from .zone_info import HoverDetector
 
 HUB_RADIUS = 10
+CUBE_SIZE = 44
+CUBE_DEPTH = 8
+
+
+def _shade_color(
+    color: tuple[int, int, int], amount: float
+) -> tuple[int, int, int]:
+    """Adjust an RGB color by a factor while keeping channels in range."""
+    return tuple(
+        max(0, min(255, int(channel * amount))) for channel in color
+    )
+
+
+def draw_hub_color_cube(
+    screen: pygame.Surface, hub_x: int, hub_y: int, color: tuple[int, int, int]
+) -> None:
+    """Draw a small 3D cube behind a hub sprite."""
+    half_size = CUBE_SIZE // 2
+    left = hub_x - half_size
+    top = hub_y - half_size
+    right = hub_x + half_size
+    bottom = hub_y + half_size
+    depth = CUBE_DEPTH
+
+    pygame.draw.polygon(
+        screen,
+        _shade_color(color, 1.2),
+        [
+            (left, top),
+            (right, top),
+            (right + depth, top - depth),
+            (left + depth, top - depth),
+        ],
+    )
+    pygame.draw.polygon(
+        screen,
+        _shade_color(color, 0.7),
+        [
+            (right, top),
+            (right + depth, top - depth),
+            (right + depth, bottom - depth),
+            (right, bottom),
+        ],
+    )
+    pygame.draw.rect(
+        screen,
+        color,
+        pygame.Rect(left, top, CUBE_SIZE, CUBE_SIZE),
+    )
+    pygame.draw.rect(
+        screen,
+        (0, 0, 0),
+        pygame.Rect(left, top, CUBE_SIZE, CUBE_SIZE),
+        1,
+    )
 
 
 def draw_connections(
@@ -109,6 +164,9 @@ def draw_hubs(
                 hub.name, int(screen_x), int(screen_y)
             )
 
+        hub_color = parse_color(hub.color)
+        draw_hub_color_cube(screen, screen_x, screen_y, hub_color)
+
         # Draw hub sprite if available
         if hub_gif_frames:
             frame_index = int(
@@ -124,7 +182,6 @@ def draw_hubs(
             )
         else:
             # Fallback to circle if GIF not available
-            hub_color = parse_color(hub.color)
             pygame.draw.circle(
                 screen, hub_color, (screen_x, screen_y), HUB_RADIUS
             )
