@@ -13,8 +13,13 @@ def _parse_metadata(metadata_str: str) -> dict[str, str]:
     metadata_str = metadata_str.removeprefix("[").removesuffix("]").strip()
     if not metadata_str:
         return result
-    for part in metadata_str.split():
+    parts = metadata_str.split()
+    current_key: str | None = None
+    for part in parts:
         if "=" not in part:
+            if current_key == "color":
+                result[current_key] += f" {part}"
+                continue
             raise ValueError(
                 f"invalid metadata format: '{part}' (expected key=value)"
             )
@@ -26,6 +31,7 @@ def _parse_metadata(metadata_str: str) -> dict[str, str]:
                 f"invalid metadata: empty key or value in '{part}'"
             )
         result[key] = value
+        current_key = key
     return result
 
 
