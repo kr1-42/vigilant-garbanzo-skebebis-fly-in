@@ -69,6 +69,36 @@ def draw_hub_color_cube(
     )
 
 
+def draw_hub_rainbow_cube(
+    screen: pygame.Surface, hub_x: int, hub_y: int
+) -> None:
+    """Draw a rainbow-colored cube for the special rainbow color."""
+    half_size = CUBE_SIZE // 2
+    left = hub_x - half_size
+    top = hub_y - half_size
+    width = CUBE_SIZE // 6
+    rainbow = (
+        (255, 0, 0),
+        (255, 165, 0),
+        (255, 255, 0),
+        (0, 180, 0),
+        (0, 120, 255),
+        (128, 0, 255),
+    )
+    for index, color in enumerate(rainbow):
+        pygame.draw.rect(
+            screen,
+            color,
+            pygame.Rect(left + index * width, top, width, CUBE_SIZE),
+        )
+    pygame.draw.rect(
+        screen,
+        (0, 0, 0),
+        pygame.Rect(left, top, CUBE_SIZE, CUBE_SIZE),
+        1,
+    )
+
+
 def draw_connections(
     screen: pygame.Surface,
     data: Data,
@@ -165,7 +195,10 @@ def draw_hubs(
             )
 
         hub_color = parse_color(hub.color)
-        draw_hub_color_cube(screen, screen_x, screen_y, hub_color)
+        if hub.color and hub.color.strip().lower() == "rainbow":
+            draw_hub_rainbow_cube(screen, screen_x, screen_y)
+        else:
+            draw_hub_color_cube(screen, screen_x, screen_y, hub_color)
 
         # Draw hub sprite if available
         if hub_gif_frames:
